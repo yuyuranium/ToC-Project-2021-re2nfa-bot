@@ -1,0 +1,24 @@
+{
+  "name": "toc-project-2021-re2nfa-bot",
+  "version": "1.0.0",
+  "description": "Line bot that turn regular expression to NFA",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot.git"
+  },
+  "author": "yuyuranium",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/issues"
+  },
+  "homepage": "https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.2",
+    "linebot": "^1.6.1"
+  }
+}
