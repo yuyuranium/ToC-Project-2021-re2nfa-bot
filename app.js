@@ -1,6 +1,6 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import linebot from 'linebot'
+const express = require('express');
+const dotenv = require('dotenv');
+const linebot = require('linebot');
 
 const PORT = 6459;
 
