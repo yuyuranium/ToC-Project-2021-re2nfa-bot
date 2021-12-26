@@ -5,16 +5,16 @@
  *
  *   0.               Re = OrExpr
  *
- *   1. (Or)      OrExpr = OrExpr '+' ConcatExpr
+ *   1. (or)      OrExpr = OrExpr '+' ConcatExpr
  *   2.                  | ConcatExpr
  *
- *   3. (Cc)  ConcatExpr = ConcatExpr PostfixExpr
+ *   3. (cc)  ConcatExpr = ConcatExpr PostfixExpr
  *   4.                  | PostfixExpr
  *
- *   5. (Pf) PostfixExpr = PrimExpr '*'
+ *   5. (pf) PostfixExpr = PrimExpr '*'
  *   6.                  | PrimExpr
  *
- *   7. (Pr)    PrimExpr = 'e'
+ *   7. (pr)    PrimExpr = 'e'
  *   8.                  | '(' OrExpr ')'
  *
  *      tokens = ['+', '*', '(', ')', 'e', '$']
@@ -24,7 +24,7 @@
  *
  * # LR parse table for the above grammar
  *
- * State    '+'   '*'   'e'   '('   ')'   '$'    Re    Or    Cc    Pf    Pr
+ * State    '+'   '*'   'e'   '('   ')'   '$'    re    or    cc    pf    pr
  *     0                 s5    s6                      s1    s2    s3    s4
  *     1     s7                            acc                             
  *     2     r2          s5    s6    r2    r2                      s8    s4
@@ -39,11 +39,11 @@
  *    11     r1          s5    s6    r1    r1                      s8    s4
  *    12     r8    r8    r8    r8    r8    r8                             
  *
- * s<k>: shifting a tokens from input token stream, pushing it onto stack, and 
+ * s<k>: shifting a symbol from input stream, pushing it onto stack, and 
  *       transitioning to state <k>.
  *
  * r<k>: applying grammar rule <k> on top of stack, prepending the reduced
- *       variable back to the input token stream.
+ *       variable back to the input stream and go back to the state fo TOS.
  */
 const StateMachine = require('javascript-state-machine');
 const visualize = require('javascript-state-machine/lib/visualize');
@@ -62,7 +62,7 @@ const GrammarRules = [
   { lhs: 'or', rhs: [ 'cc' ] },
   { lhs: 'cc', rhs: [ 'cc', 'pf' ] },
   { lhs: 'cc', rhs: [ 'pf' ] },
-  { lhs: 'pf', rhs: [ 'pf', '*' ] },
+  { lhs: 'pf', rhs: [ 'pr', '*' ] },
   { lhs: 'pf', rhs: [ 'pr' ] },
   { lhs: 'pr', rhs: [ 'e' ] },
   { lhs: 'pr', rhs: [ '(', 'or', ')' ] }
@@ -71,6 +71,8 @@ const GrammarRules = [
 class ReParser {
   // @TODO global state counter for construction nfa
   // @TODO using stack to push sub-nfa's
+
+  // Private variables
   #stack;
   #input;
   #cfsm;
@@ -81,32 +83,33 @@ class ReParser {
     this.#cfsm = new StateMachine({
       init: 'S0',
       transitions: [
-        { name: '+', from: [ 'S1', 'S10' ], to: 'S7' },
-        { name: '*', from: [ 'S4' ], to: 'S9' },
-        { name: 'e', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S5' },
-        { name: '(', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S6' },
-        { name: ')', from: [ 'S10' ], to: 'S12' },
-        { name: 'or', from: [ 'S0' ], to: 'S1' },
-        { name: 'or', from: [ 'S6' ], to: 'S10' },
-        { name: 'cc', from: [ 'S0', 'S6' ], to: 'S2' },
-        { name: 'cc', from: [ 'S7' ], to: 'S11' },
-        { name: 'pf', from: [ 'S0', 'S6', 'S7' ], to: 'S3' },
-        { name: 'pf', from: [ 'S2', 'S11' ], to: 'S8' },
-        { name: 'pr', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S4' },
+        { name: '+', from: ['S1', 'S10'], to: 'S7' },
+        { name: '*', from: ['S4'], to: 'S9' },
+        { name: 'e', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S5' },
+        { name: '(', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S6' },
+        { name: ')', from: ['S10'], to: 'S12' },
+        { name: 'or', from: ['S0'], to: 'S1' },
+        { name: 'or', from: ['S6'], to: 'S10' },
+        { name: 'cc', from: ['S0', 'S6'], to: 'S2' },
+        { name: 'cc', from: ['S7'], to: 'S11' },
+        { name: 'pf', from: ['S0', 'S6', 'S7'], to: 'S3' },
+        { name: 'pf', from: ['S2', 'S11'], to: 'S8' },
+        { name: 'pr', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S4' },
         { name: 'goto', from: '*', to: (s) => { return s; } }
       ],
       data: {
         reductions: [
-          { state: 'S2', peek: [ '+', ')', '$' ], rule: 2 },
-          { state: 'S3', peek: [ '+', 'e', '(', ')', '$' ], rule: 4 },
-          { state: 'S4', peek: [ '+', 'e', '(', ')', '$' ], rule: 6 },
-          { state: 'S5', peek: [ '+', '*', 'e', '(', ')', '$' ], rule: 7 },
-          { state: 'S8', peek: [ '+', 'e', '(', ')', '$' ], rule: 3 },
-          { state: 'S9', peek: [ '+', 'e', '(', ')', '$' ], rule: 5 },
-          { state: 'S11', peek: [ '+', ')', '$' ], rule: 1 },
-          { state: 'S12', peek: [ '+', '*', 'e', '(', ')', '$' ], rule: 8 },
+          { state: 'S2', peek: ['+', ')', '$'], rule: 2 },
+          { state: 'S3', peek: ['+', 'e', '(', ')', '$'], rule: 4 },
+          { state: 'S4', peek: ['+', 'e', '(', ')', '$'], rule: 6 },
+          { state: 'S5', peek: ['+', '*', 'e', '(', ')', '$'], rule: 7 },
+          { state: 'S8', peek: ['+', 'e', '(', ')', '$'], rule: 3 },
+          { state: 'S9', peek: ['+', 'e', '(', ')', '$'], rule: 5 },
+          { state: 'S11', peek: ['+', ')', '$'], rule: 1 },
+          { state: 'S12', peek: ['+', '*', 'e', '(', ')', '$'], rule: 8 },
         ]
       },
+      // @TODO remove the methods
       methods: {
         canShift: (symbol) => {
           return this.#cfsm.can(symbol);
@@ -179,15 +182,15 @@ class ReParser {
   }
 
   setInput(re) {
+    re.replace(/\s/g, '');       // remove whitespaces from re
     this.#input = re.split('');  // separate all characters in re
     this.#input.push('$');
-    // console.log('Input set:', this.#input);
   }
 
   peek() {
     if (this.#input.length == 0) return null;
 
-    let symbol = this.#input[0];  // Peek top of input stream
+    let symbol = this.#input[0];  // peek top of input stream
     if (symbol.match(/^[a-zA-Z0-9]$/)) {
       return 'e';
     } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
