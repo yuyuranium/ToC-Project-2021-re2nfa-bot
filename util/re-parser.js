@@ -48,78 +48,158 @@
 const StateMachine = require('javascript-state-machine');
 const visualize = require('javascript-state-machine/lib/visualize');
 
-let nonTerminals = [
-    'Or', 'Cc', 'Pf', 'Pr'
+const NonTerminals = [
+  'or', 'cc', 'pf', 'pr'
 ];
 
-let terminals = [
-    '+', '*', '(', ')', '$'
+const Terminals = [
+  '+', '*', '(', ')', '$'
+];
+
+const GrammarRules = [
+  { lhs: 're', rhs: [ 'or' ] },
+  { lhs: 'or', rhs: [ 'or', '+', 'cc' ] },
+  { lhs: 'or', rhs: [ 'cc' ] },
+  { lhs: 'cc', rhs: [ 'cc', 'pf' ] },
+  { lhs: 'cc', rhs: [ 'pf' ] },
+  { lhs: 'pf', rhs: [ 'pf', '*' ] },
+  { lhs: 'pf', rhs: [ 'pr' ] },
+  { lhs: 'pr', rhs: [ 'e' ] },
+  { lhs: 'pr', rhs: [ '(', 'or', ')' ] }
 ];
 
 class ReParser {
-    // @TODO global state counter for construction nfa
-    // @TODO using stack to push sub-nfa's
-    constructor() {
-        this.stack = [];
-        this.input = [];
-        this.dpda = new StateMachine({
-            init: 'S0',
-            transitions: [
-                { name: '+', from: [ 'S1', 'S10' ], to: 'S7' },
-                { name: '*', from: [ 'S4' ], to: 'S9' },
-                { name: 'e', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S5' },
-                { name: '(', from: [ 'S0', 'S3', 'S6', 'S7', 'S11' ], to: 'S6' },
-                { name: ')', from: [ 'S10' ], to: 'S12' },
-                { name: 'Or', from: [ 'S0' ], to: 'S1' },
-                { name: 'Or', from: [ 'S6' ], to: 'S10' },
-                { name: 'Cc', from: [ 'S0', 'S6' ], to: 'S2' },
-                { name: 'Cc', from: [ 'S7' ], to: 'S11' },
-                { name: 'Pf', from: [ 'S0', 'S6', 'S7' ], to: 'S3' },
-                { name: 'Pf', from: [ 'S2', 'S11' ], to: 'S8' },
-                { name: 'Pr', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S4' },
-            ],
-            data: {
-                reduceRule: [
+  // @TODO global state counter for construction nfa
+  // @TODO using stack to push sub-nfa's
+  #stack;
+  #input;
+  #cfsm;
 
-                ]
-            },
-            methods: {
-                canShift: () => {
-                    return 0;
-                },
-                canReduce: () => {
-                    return 0;
-                }
-            }
-        });
-    }
-
-    setInput(re) {
-        this.input = re.split('');
-        this.input.push('$');
-        console.log('Input set:', this.input);
-    }
-
-    next() {
-        if (this.input.length == 0) return null;
-
-        let token = this.input[0];  // Peek top of input stream
-        if (token.match(/[a-zA-Z0-9]/)) {
-            return 'e';
-        } else if (nonTerminals.includes(token) || terminals.includes(token)) {
-            return token;
-        } else {
-            return null;
+  constructor() {
+    this.#stack = [];
+    this.#input = [];
+    this.#cfsm = new StateMachine({
+      init: 'S0',
+      transitions: [
+        { name: '+', from: [ 'S1', 'S10' ], to: 'S7' },
+        { name: '*', from: [ 'S4' ], to: 'S9' },
+        { name: 'e', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S5' },
+        { name: '(', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S6' },
+        { name: ')', from: [ 'S10' ], to: 'S12' },
+        { name: 'or', from: [ 'S0' ], to: 'S1' },
+        { name: 'or', from: [ 'S6' ], to: 'S10' },
+        { name: 'cc', from: [ 'S0', 'S6' ], to: 'S2' },
+        { name: 'cc', from: [ 'S7' ], to: 'S11' },
+        { name: 'pf', from: [ 'S0', 'S6', 'S7' ], to: 'S3' },
+        { name: 'pf', from: [ 'S2', 'S11' ], to: 'S8' },
+        { name: 'pr', from: [ 'S0', 'S2', 'S6', 'S7', 'S11' ], to: 'S4' },
+        { name: 'goto', from: '*', to: (s) => { return s; } }
+      ],
+      data: {
+        reductions: [
+          { state: 'S2', peek: [ '+', ')', '$' ], rule: 2 },
+          { state: 'S3', peek: [ '+', 'e', '(', ')', '$' ], rule: 4 },
+          { state: 'S4', peek: [ '+', 'e', '(', ')', '$' ], rule: 6 },
+          { state: 'S5', peek: [ '+', '*', 'e', '(', ')', '$' ], rule: 7 },
+          { state: 'S8', peek: [ '+', 'e', '(', ')', '$' ], rule: 3 },
+          { state: 'S9', peek: [ '+', 'e', '(', ')', '$' ], rule: 5 },
+          { state: 'S11', peek: [ '+', ')', '$' ], rule: 1 },
+          { state: 'S12', peek: [ '+', '*', 'e', '(', ')', '$' ], rule: 8 },
+        ]
+      },
+      methods: {
+        canShift: (symbol) => {
+          return this.#cfsm.can(symbol);
+        },
+        canReduce: (symbol) => {
+          let cfsm = this.#cfsm;
+          let reduction = cfsm.reductions.find(r => r.state === cfsm.state);
+          return (reduction)? reduction.peek.includes(symbol) : false;
+        },
+        canAccept: (symbol) => {
+          return this.#cfsm.state === 'S1' && symbol === '$';
+        },
+        reductionRule: (symbol) => {
+          let cfsm = this.#cfsm;
+          let reduction = cfsm.reductions.find(
+              r => (r.state === cfsm.state) && (r.peek.includes(symbol)));
+          return reduction.rule;
         }
-    }
+      }
+    });
+  }
 
-    shift() {
-        return this.input.shift();
-    }
+  compile(re) {
+    this.setInput(re);
 
-    dumpParserDpda() {
+    let accept = false;
+    let stack = this.#stack;
+    let cfsm = this.#cfsm;
+    let input = this.#input;
+    let step = 0;
 
+    stack.push({ symbol: null, state: 'S0' });
+    while (!accept) {
+      console.log('\n', step, ':', stack, input);
+      let nextSymbol = this.peek();
+      if (cfsm.canShift(nextSymbol)) {
+        cfsm[nextSymbol]();  // transition to next state;
+        stack.push({ 
+          symbol: input.shift(),
+          state: cfsm.state
+        });
+        console.log('can shift', cfsm.state);
+
+        if (cfsm.canAccept(this.peek())) {
+          accept = true;
+        }
+      } else if (cfsm.canReduce(nextSymbol)) {
+        let rule = GrammarRules[cfsm.reductionRule(nextSymbol)];
+        for (let i = 0; i < rule.rhs.length; ++i)
+          stack.pop();
+
+        input.unshift(rule.lhs);
+        console.log('can reduce', rule.lhs, '->', rule.rhs);
+        cfsm.goto(stack[stack.length - 1].state);
+      } else {
+        console.log('parser error');
+        return false;
+      }
+      step++;
     }
+    return true;
+  }
+
+  test() {
+    let cfsm = this.#cfsm;
+    cfsm['pr']();
+    console.log(cfsm);
+    cfsm.goto('S11');
+    cfsm.canReduce('+');
+  }
+
+  setInput(re) {
+    this.#input = re.split('');  // separate all characters in re
+    this.#input.push('$');
+    // console.log('Input set:', this.#input);
+  }
+
+  peek() {
+    if (this.#input.length == 0) return null;
+
+    let symbol = this.#input[0];  // Peek top of input stream
+    if (symbol.match(/^[a-zA-Z0-9]$/)) {
+      return 'e';
+    } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
+      return symbol;
+    } else {
+      return null;
+    }
+  }
+
+  shift() {
+    return this.#input.shift();
+  }
 }
 
 module.exports = ReParser;
