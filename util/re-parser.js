@@ -54,7 +54,7 @@ const NonTerminals = [
 ];
 
 const Terminals = [
-  '+', '*', '(', ')', '$'
+  '+', '*', 'e', '(', ')', '$'
 ];
 
 const GrammarRules = [
@@ -70,6 +70,7 @@ const GrammarRules = [
 ];
 
 const Reductions = {
+  'S1': { peek: ['$'], rule: 0 },
   'S2': { peek: ['+', ')', '$'], rule: 2 },
   'S3': { peek: ['+', 'e', '(', ')', '$'], rule: 4 },
   'S4': { peek: ['+', 'e', '(', ')', '$'], rule: 6 },
@@ -114,11 +115,59 @@ const canAccept = function(symbol) {
 
 let stack = [];
 let input = [];
+let inputRe = '';
+let cursor = 0;
+
+const getSymbolNames = function(symbolList) {
+  console.log(symbolList);
+  let symbolNames = '';
+  for (let i = 0; i < symbolList.length; ++i) {
+    let symbol = symbolList[i];
+
+    console.log(symbol);
+    switch (symbol) {
+      case 'or':
+        symbolNames += 'OrExpr';
+        break;
+      case 'cc':
+        symbolNames += 'ConcatExpr';
+        break;
+      case 'pf':
+        symbolNames += 'PostfixExpr';
+        break;
+      case 'pr':
+        symbolNames += 'PrimExpr';
+        break;
+      case 'e':
+        symbolNames += '<char>';
+        break;
+      default:
+        if (Terminals.includes(symbol)) {
+          symbolNames += `'${symbol}'`;
+        }
+        break;
+    }
+
+    if (i != symbolList.length - 1) {
+      symbolNames += '\n\t';
+    }
+  }
+  return symbolNames;
+}
+
+const getHighlightedInput = function() {
+  return [
+    inputRe.slice(0, cursor),
+    ' [', inputRe.slice(cursor, cursor + 1), '] ',
+    inputRe.slice(cursor + 1)
+  ].join('');
+}
 
 const setInput = function(reString) {
-    reString.replace(/\s/g, '');  // remove whitespaces from re
-    input = reString.split('');   // separate all characters in re
-    input.push('$');
+  input = reString.split(''); // separate all characters in re
+  input.push('$');
+  inputRe = reString;
+  cursor = 0;
 }
 
 const peek = function() {
@@ -130,46 +179,87 @@ const peek = function() {
   } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
     return symbol;
   } else {
-    return null;
+    throw `**Unknown Token**\n\n` +
+          `At input RE:${cursor + 1}:\n\t${getHighlightedInput()}`;
   }
 }
 
 const compile = function(reString) {
-  setInput(reString);
-
   let accept = false;
   let step = 0;
 
-  stack.push({ symbol: null, state: 'S0' });
+  setInput(reString);
+
+  // Engine for the table driven SLR(1) parser
+  stack = [];
+  stack.push({ symbol: '', state: 'S0' });
+  cfsm.goto('S0');
+
+  let code = '';
+
   while (!accept) {
-    console.log('\n', step, ':', stack, input);
-    let nextSymbol = peek();
+    let nextSymbol = peek()
+
     if (canShift(nextSymbol)) {
       cfsm[nextSymbol]();  // transition to next state;
+
+      if (Terminals.includes(nextSymbol)) {
+        cursor++;
+      }
+
+      let shifted = input.shift();
       stack.push({ 
-        symbol: input.shift(),
+        symbol: shifted,  // shift one symbol from input stream
         state: cfsm.state
       });
-      console.log('can shift', cfsm.state);
 
       if (canAccept(peek())) {
         accept = true;
       }
     } else if (canReduce(nextSymbol)) {
-      let rule = GrammarRules[Reductions[cfsm.state].rule];
-      for (let i = 0; i < rule.rhs.length; ++i)
-        stack.pop();
+      let ruleIndex = Reductions[cfsm.state].rule;
+      let rule = GrammarRules[ruleIndex];
+      let symbol = '';
+      for (let i = 0; i < rule.rhs.length; ++i) {
+        symbol = stack.pop().symbol;
+      }
 
-      input.unshift(rule.lhs);
-      console.log('can reduce', rule.lhs, '->', rule.rhs);
+      switch (ruleIndex) {
+        case 1:
+          code += 'Or ';
+          console.log('Or');
+          break;
+        case 3:
+          code += 'Cc ';
+          console.log('Cc');
+          break;
+        case 5:
+          code += 'Pf ';
+          console.log('Pf');
+          break;
+        case 7:
+          code += `'${symbol}' `;
+          console.log(`'${symbol}' `);
+        default:
+          break;
+      }
+
+      input.unshift(rule.lhs);  // prepend the reduced symbol to input stream
       cfsm.goto(stack[stack.length - 1].state);
     } else {
-      console.log('parser error');
-      return false;
+      console.log(cfsm.state);
+      let expected = cfsm.transitions().filter(t => t !== 'goto');
+      if (Reductions[cfsm.state]) {
+        expected = expected.concat(Reductions[cfsm.state].peek);
+      }
+      throw `**Parse Error**\n\n` +
+            `At input RE:${cursor + 1}:\n\t${getHighlightedInput()}\n\n` +
+            `Expected:\n\t${getSymbolNames(expected)}\n\n` +
+            `got: '${nextSymbol}'`;
     }
     step++;
   }
-  return true;
+  return code;
 }
 
 module.exports = {

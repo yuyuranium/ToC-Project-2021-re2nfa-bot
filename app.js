@@ -15,8 +15,12 @@ const bot = linebot({
 });
 
 bot.on('message', (event) => {
-  let result = reParser.compile(event.message.text);
-  event.reply((result)? 'It is an RE' : 'Not an RE');
+  try {
+    let result = reParser.compile(event.message.text);
+    event.reply(`codegen: ${result}`);
+  } catch (e) {
+    event.reply(e);
+  }
 });
 
 app.post('/', bot.parser());
