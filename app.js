@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const linebot = require('linebot');
-const ReParser = require('./util/re-parser');
+const reParser = require('./util/re-parser');
 
 const PORT = 6459;
 
@@ -15,7 +15,6 @@ const bot = linebot({
 });
 
 bot.on('message', (event) => {
-  let reParser = new ReParser;
   let result = reParser.compile(event.message.text);
   event.reply((result)? 'It is an RE' : 'Not an RE');
 });

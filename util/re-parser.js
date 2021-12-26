@@ -40,7 +40,8 @@
  *    12     r8    r8    r8    r8    r8    r8                             
  *
  * s<k>: shifting a symbol from input stream, pushing it onto stack, and 
- *       transitioning to state <k>.
+ *       transitioning to state <k>. s<k> is part of the transitions in the cfsm
+ *       (characteristic finite state machine).
  *
  * r<k>: applying grammar rule <k> on top of stack, prepending the reduced
  *       variable back to the input stream and go back to the state fo TOS.
@@ -68,141 +69,109 @@ const GrammarRules = [
   { lhs: 'pr', rhs: [ '(', 'or', ')' ] }
 ];
 
-class ReParser {
-  // @TODO global state counter for construction nfa
-  // @TODO using stack to push sub-nfa's
+const Reductions = {
+  'S2': { peek: ['+', ')', '$'], rule: 2 },
+  'S3': { peek: ['+', 'e', '(', ')', '$'], rule: 4 },
+  'S4': { peek: ['+', 'e', '(', ')', '$'], rule: 6 },
+  'S5': { peek: ['+', '*', 'e', '(', ')', '$'], rule: 7 },
+  'S8': { peek: ['+', 'e', '(', ')', '$'], rule: 3 },
+  'S9': { peek: ['+', 'e', '(', ')', '$'], rule: 5 },
+  'S11': { peek: ['+', ')', '$'], rule: 1 },
+  'S12': { peek: ['+', '*', 'e', '(', ')', '$'], rule: 8 },
+};
 
-  // Private variables
-  #stack;
-  #input;
-  #cfsm;
+const cfsm = new StateMachine({
+  init: 'S0',
+  transitions: [
+    { name: '+', from: ['S1', 'S10'], to: 'S7' },
+    { name: '*', from: ['S4'], to: 'S9' },
+    { name: 'e', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S5' },
+    { name: '(', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S6' },
+    { name: ')', from: ['S10'], to: 'S12' },
+    { name: 'or', from: ['S0'], to: 'S1' },
+    { name: 'or', from: ['S6'], to: 'S10' },
+    { name: 'cc', from: ['S0', 'S6'], to: 'S2' },
+    { name: 'cc', from: ['S7'], to: 'S11' },
+    { name: 'pf', from: ['S0', 'S6', 'S7'], to: 'S3' },
+    { name: 'pf', from: ['S2', 'S11'], to: 'S8' },
+    { name: 'pr', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S4' },
+    { name: 'goto', from: '*', to: (s) => { return s; } }
+  ]
+});
 
-  constructor() {
-    this.#stack = [];
-    this.#input = [];
-    this.#cfsm = new StateMachine({
-      init: 'S0',
-      transitions: [
-        { name: '+', from: ['S1', 'S10'], to: 'S7' },
-        { name: '*', from: ['S4'], to: 'S9' },
-        { name: 'e', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S5' },
-        { name: '(', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S6' },
-        { name: ')', from: ['S10'], to: 'S12' },
-        { name: 'or', from: ['S0'], to: 'S1' },
-        { name: 'or', from: ['S6'], to: 'S10' },
-        { name: 'cc', from: ['S0', 'S6'], to: 'S2' },
-        { name: 'cc', from: ['S7'], to: 'S11' },
-        { name: 'pf', from: ['S0', 'S6', 'S7'], to: 'S3' },
-        { name: 'pf', from: ['S2', 'S11'], to: 'S8' },
-        { name: 'pr', from: ['S0', 'S2', 'S6', 'S7', 'S11'], to: 'S4' },
-        { name: 'goto', from: '*', to: (s) => { return s; } }
-      ],
-      data: {
-        reductions: [
-          { state: 'S2', peek: ['+', ')', '$'], rule: 2 },
-          { state: 'S3', peek: ['+', 'e', '(', ')', '$'], rule: 4 },
-          { state: 'S4', peek: ['+', 'e', '(', ')', '$'], rule: 6 },
-          { state: 'S5', peek: ['+', '*', 'e', '(', ')', '$'], rule: 7 },
-          { state: 'S8', peek: ['+', 'e', '(', ')', '$'], rule: 3 },
-          { state: 'S9', peek: ['+', 'e', '(', ')', '$'], rule: 5 },
-          { state: 'S11', peek: ['+', ')', '$'], rule: 1 },
-          { state: 'S12', peek: ['+', '*', 'e', '(', ')', '$'], rule: 8 },
-        ]
-      },
-      // @TODO remove the methods
-      methods: {
-        canShift: (symbol) => {
-          return this.#cfsm.can(symbol);
-        },
-        canReduce: (symbol) => {
-          let cfsm = this.#cfsm;
-          let reduction = cfsm.reductions.find(r => r.state === cfsm.state);
-          return (reduction)? reduction.peek.includes(symbol) : false;
-        },
-        canAccept: (symbol) => {
-          return this.#cfsm.state === 'S1' && symbol === '$';
-        },
-        reductionRule: (symbol) => {
-          let cfsm = this.#cfsm;
-          let reduction = cfsm.reductions.find(
-              r => (r.state === cfsm.state) && (r.peek.includes(symbol)));
-          return reduction.rule;
-        }
-      }
-    });
-  }
+const canShift = function(symbol) {
+  return cfsm.can(symbol);
+}
 
-  compile(re) {
-    this.setInput(re);
+const canReduce = function(symbol) {
+  let reduction = Reductions[cfsm.state];
+  return (reduction)? reduction.peek.includes(symbol) : false;
+}
 
-    let accept = false;
-    let stack = this.#stack;
-    let cfsm = this.#cfsm;
-    let input = this.#input;
-    let step = 0;
+const canAccept = function(symbol) {
+  return cfsm.state === 'S1' && symbol === '$';
+}
 
-    stack.push({ symbol: null, state: 'S0' });
-    while (!accept) {
-      console.log('\n', step, ':', stack, input);
-      let nextSymbol = this.peek();
-      if (cfsm.canShift(nextSymbol)) {
-        cfsm[nextSymbol]();  // transition to next state;
-        stack.push({ 
-          symbol: input.shift(),
-          state: cfsm.state
-        });
-        console.log('can shift', cfsm.state);
+let stack = [];
+let input = [];
 
-        if (cfsm.canAccept(this.peek())) {
-          accept = true;
-        }
-      } else if (cfsm.canReduce(nextSymbol)) {
-        let rule = GrammarRules[cfsm.reductionRule(nextSymbol)];
-        for (let i = 0; i < rule.rhs.length; ++i)
-          stack.pop();
+const setInput = function(reString) {
+    reString.replace(/\s/g, '');  // remove whitespaces from re
+    input = reString.split('');   // separate all characters in re
+    input.push('$');
+}
 
-        input.unshift(rule.lhs);
-        console.log('can reduce', rule.lhs, '->', rule.rhs);
-        cfsm.goto(stack[stack.length - 1].state);
-      } else {
-        console.log('parser error');
-        return false;
-      }
-      step++;
-    }
-    return true;
-  }
+const peek = function() {
+  if (input.length == 0) return null;
 
-  test() {
-    let cfsm = this.#cfsm;
-    cfsm['pr']();
-    console.log(cfsm);
-    cfsm.goto('S11');
-    cfsm.canReduce('+');
-  }
-
-  setInput(re) {
-    re.replace(/\s/g, '');       // remove whitespaces from re
-    this.#input = re.split('');  // separate all characters in re
-    this.#input.push('$');
-  }
-
-  peek() {
-    if (this.#input.length == 0) return null;
-
-    let symbol = this.#input[0];  // peek top of input stream
-    if (symbol.match(/^[a-zA-Z0-9]$/)) {
-      return 'e';
-    } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
-      return symbol;
-    } else {
-      return null;
-    }
-  }
-
-  shift() {
-    return this.#input.shift();
+  let symbol = input[0];  // peek top of input stream
+  if (symbol.match(/^[a-zA-Z0-9]$/)) {
+    return 'e';
+  } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
+    return symbol;
+  } else {
+    return null;
   }
 }
 
-module.exports = ReParser;
+const compile = function(reString) {
+  setInput(reString);
+
+  let accept = false;
+  let step = 0;
+
+  stack.push({ symbol: null, state: 'S0' });
+  while (!accept) {
+    console.log('\n', step, ':', stack, input);
+    let nextSymbol = peek();
+    if (canShift(nextSymbol)) {
+      cfsm[nextSymbol]();  // transition to next state;
+      stack.push({ 
+        symbol: input.shift(),
+        state: cfsm.state
+      });
+      console.log('can shift', cfsm.state);
+
+      if (canAccept(peek())) {
+        accept = true;
+      }
+    } else if (canReduce(nextSymbol)) {
+      let rule = GrammarRules[Reductions[cfsm.state].rule];
+      for (let i = 0; i < rule.rhs.length; ++i)
+        stack.pop();
+
+      input.unshift(rule.lhs);
+      console.log('can reduce', rule.lhs, '->', rule.rhs);
+      cfsm.goto(stack[stack.length - 1].state);
+    } else {
+      console.log('parser error');
+      return false;
+    }
+    step++;
+  }
+  return true;
+}
+
+module.exports = {
+  compile: compile
+};
