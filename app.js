@@ -17,7 +17,7 @@ const bot = linebot({
 bot.on('message', (event) => {
   try {
     let result = reParser.compile(event.message.text);
-    event.reply(`codegen: ${result}`);
+    event.reply(`nfa:\n${result}`);
   } catch (e) {
     event.reply(reParser.getErrorMessage(e));
   }

@@ -252,21 +252,20 @@ const parserDriver = function(tokenStream) {
 
       // Generate the code according to the rule applied.
       switch (rule.index) {
-        case 1:
-          code += 'Or ';
+        case 1:  // OrExpr = OrExpr '+' ConcatExpr
+          code += 'union\n';
           break;
-        case 3:
-          code += 'Cc ';
+        case 3:  // ConcatExpr = ConcatExpr PostfixExpr
+          code += 'concat\n';
           break;
-        case 5:
-          code += 'Pf ';
+        case 5:  // PostfixExpr = PrimExpr '*'
+          code += 'kleene\n';
           break;
-        case 7:
-          code += `'${symbol}' `;
+        case 7:  // PrimExpr = 'e'
+          code += `push '${symbol}'\n`;
         default:
           break;
       }
-
     } else {
       // Expected symbols are all the possible cfsm transitions.
       let expected = cfsm.transitions().filter(t => t !== 'goto');
@@ -285,7 +284,73 @@ const parserDriver = function(tokenStream) {
       };
     }
   }
-  return code;
+  return code.slice(0, -1);  // remove trailing '\n'
+}
+
+const vm = function(stack, op, symbol = null) {
+  if (op === 'push') {
+    stack.push(symbol);
+  } else if (op === 'union') {
+    if (stack.length < 2) {
+      throw {
+        type: 'Stack Underflow',
+        ins: 'union'
+      };
+    }
+
+    let x = stack.pop();
+    let y = stack.pop();
+    stack.push(`(${y}|${x})`);
+  } else if (op === 'concat') {
+    if (stack.length < 2) {
+      throw {
+        type: 'Stack Underflow',
+        ins: 'concat'
+      };
+    }
+
+    let x = stack.pop();
+    let y = stack.pop();
+    stack.push(`(${y}->${x})`);
+  } else if (op === 'kleene') {
+    if (stack.length < 1) {
+      throw {
+        type: 'Stack Underflow',
+        ins: 'kleene'
+      };
+    }
+
+    let x = stack.pop();
+    stack.push(`(${x})*`);
+  }
+}
+
+const generateNFA = function(code) {
+  let stack = [];
+  let instructions = code.split('\n');
+
+  for (let i = 0; i < instructions.length; ++i) {
+    let ins = instructions[i];
+    console.log(ins);
+    switch (ins) {
+      case 'union':
+      case 'concat':
+      case 'kleene':
+        vm(stack, ins);
+        break;
+      default:
+        let res = ins.match(/^push \'([a-zA-Z0-9])\'$/);
+
+        if (!res) {
+          throw {
+            type: 'Invalid Instruction'
+          };
+        }
+
+        vm(stack, 'push', res[1]);
+    }
+  }
+  return stack[0];
 }
 
 const compile = function(reString) {
@@ -300,7 +365,8 @@ const compile = function(reString) {
   let code = parserDriver(tokenStream);
 
   // @todo generate a nfa based on the code
-  return code;
+  let nfa = generateNFA(code);
+  return nfa;
 }
 
 module.exports = {
