@@ -19,7 +19,7 @@ bot.on('message', (event) => {
     let result = reParser.compile(event.message.text);
     event.reply(`codegen: ${result}`);
   } catch (e) {
-    event.reply(e);
+    event.reply(reParser.getErrorMessage(e));
   }
 });
 

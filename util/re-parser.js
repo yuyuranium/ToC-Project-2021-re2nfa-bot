@@ -113,18 +113,13 @@ const canAccept = function(symbol) {
   return cfsm.state === 'S1' && symbol === '$';
 }
 
-let stack = [];
-let input = [];
-let inputRe = '';
-let cursor = 0;
+let inputReString = '';
 
 const getSymbolNames = function(symbolList) {
-  console.log(symbolList);
   let symbolNames = '';
   for (let i = 0; i < symbolList.length; ++i) {
     let symbol = symbolList[i];
 
-    console.log(symbol);
     switch (symbol) {
       case 'or':
         symbolNames += 'OrExpr';
@@ -139,7 +134,7 @@ const getSymbolNames = function(symbolList) {
         symbolNames += 'PrimExpr';
         break;
       case 'e':
-        symbolNames += '<char>';
+        symbolNames += '[a-zA-Z0-9]';
         break;
       default:
         if (Terminals.includes(symbol)) {
@@ -155,67 +150,92 @@ const getSymbolNames = function(symbolList) {
   return symbolNames;
 }
 
-const getHighlightedInput = function() {
+const highlight = function(input, position) {
+  // Use brackets to highlight the position of input.
   return [
-    inputRe.slice(0, cursor),
-    ' [', inputRe.slice(cursor, cursor + 1), '] ',
-    inputRe.slice(cursor + 1)
+    input.slice(0, position),
+    ' [', input.slice(position, position + 1), '] ',
+    input.slice(position + 1)
   ].join('');
 }
 
-const setInput = function(reString) {
-  input = reString.split(''); // separate all characters in re
-  input.push('$');
-  inputRe = reString;
-  cursor = 0;
+const getErrorMessage = function(error) {
+  switch (error.type) {
+    case 'Unknown Token':
+      return `**Unknown Token**\n\n` +
+             `At input:${error.position + 1}:\n` +
+             `\t${highlight(error.input, error.position)}`;
+    case 'Parse Error':
+      return `**Parse Error**\n\n` +
+            `At input RE:${error.position + 1}:\n` +
+            `\t${highlight(error.input, error.position)}\n\n` +
+            `Expected:\n\t${getSymbolNames(error.expected)}\n\n` +
+            `Got: '${error.got}'`;
+    default:
+      return null;
+  }
 }
 
-const peek = function() {
-  if (input.length == 0) return null;
+const buildTokenStream = function(reString) {
+  let tokenStream = reString.split('');
+  tokenStream.push('$');
+  return tokenStream;
+}
 
-  let symbol = input[0];  // peek top of input stream
+const peek = function(inputStream) {
+  if (inputStream.length == 0) return null;
+
+  let symbol = inputStream[0];  // peek top of input stream
   if (symbol.match(/^[a-zA-Z0-9]$/)) {
     return 'e';
   } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
     return symbol;
   } else {
-    throw `**Unknown Token**\n\n` +
-          `At input RE:${cursor + 1}:\n\t${getHighlightedInput()}`;
+    return null;
   }
 }
 
-const compile = function(reString) {
+const parserDriver = function(tokenStream) {
   let accept = false;
-  let step = 0;
-
-  setInput(reString);
-
-  // Engine for the table driven SLR(1) parser
-  stack = [];
-  stack.push({ symbol: '', state: 'S0' });
-  cfsm.goto('S0');
-
+  let stack = [];
+  let input = tokenStream;
   let code = '';
+  let cursor = 0;
+
+  cfsm.goto('S0');                          // start from initial state
+  stack.push({ symbol: '', state: 'S0' });  // push initial state to stack
 
   while (!accept) {
-    let nextSymbol = peek()
+    let nextSymbol = peek(input);
+
+    // The peeker could not recognize the upcoming symbol.
+    if (!nextSymbol) {
+      throw {
+        type: 'Unknown Token',
+        input: inputReString,
+        position: cursor
+      };
+    }
 
     if (canShift(nextSymbol)) {
-      cfsm[nextSymbol]();  // transition to next state;
+      // Transition to next state.
+      cfsm[nextSymbol]();
 
       if (Terminals.includes(nextSymbol)) {
-        cursor++;
+        cursor++;  // a token has been consumed
       }
 
+      // Shift one symbol from input stream.
       let shifted = input.shift();
+
+      // Push the current state onto stack.
       stack.push({ 
-        symbol: shifted,  // shift one symbol from input stream
+        symbol: shifted,
         state: cfsm.state
       });
 
-      if (canAccept(peek())) {
-        accept = true;
-      }
+      // Check if the next state is an accept state.
+      accept = canAccept(peek(input));
     } else if (canReduce(nextSymbol)) {
       let ruleIndex = Reductions[cfsm.state].rule;
       let rule = GrammarRules[ruleIndex];
@@ -227,41 +247,60 @@ const compile = function(reString) {
       switch (ruleIndex) {
         case 1:
           code += 'Or ';
-          console.log('Or');
           break;
         case 3:
           code += 'Cc ';
-          console.log('Cc');
           break;
         case 5:
           code += 'Pf ';
-          console.log('Pf');
           break;
         case 7:
           code += `'${symbol}' `;
-          console.log(`'${symbol}' `);
         default:
           break;
       }
 
-      input.unshift(rule.lhs);  // prepend the reduced symbol to input stream
+      // Prepend the reduced symbol to input stream and go back to the state
+      // of TOS.
+      input.unshift(rule.lhs);
       cfsm.goto(stack[stack.length - 1].state);
     } else {
-      console.log(cfsm.state);
+      // Expected symbols are all the possible cfsm transitions.
       let expected = cfsm.transitions().filter(t => t !== 'goto');
+
+      // Plus, symbols that can trigger reduction also count.
       if (Reductions[cfsm.state]) {
         expected = expected.concat(Reductions[cfsm.state].peek);
       }
-      throw `**Parse Error**\n\n` +
-            `At input RE:${cursor + 1}:\n\t${getHighlightedInput()}\n\n` +
-            `Expected:\n\t${getSymbolNames(expected)}\n\n` +
-            `got: '${nextSymbol}'`;
+
+      throw {
+        type: 'Parse Error',
+        input: inputReString,
+        position: cursor,
+        expected: expected,
+        got: nextSymbol
+      };
     }
-    step++;
   }
   return code;
 }
 
+const compile = function(reString) {
+  // Set the global variable: inputReString.
+  inputReString = reString;
+
+  // Tokenize the input to token stream.
+  let tokenStream = buildTokenStream(reString);
+
+  // Use parser driver to parse the token stream by the defined parse table and 
+  // cfsm. Get the generated code of parsing result.
+  let code = parserDriver(tokenStream);
+
+  // @todo generate a nfa based on the code
+  return code;
+}
+
 module.exports = {
-  compile: compile
+  compile: compile,
+  getErrorMessage: getErrorMessage
 };
