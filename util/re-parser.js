@@ -58,15 +58,15 @@ const Terminals = [
 ];
 
 const GrammarRules = [
-  { lhs: 're', rhs: [ 'or' ] },
-  { lhs: 'or', rhs: [ 'or', '+', 'cc' ] },
-  { lhs: 'or', rhs: [ 'cc' ] },
-  { lhs: 'cc', rhs: [ 'cc', 'pf' ] },
-  { lhs: 'cc', rhs: [ 'pf' ] },
-  { lhs: 'pf', rhs: [ 'pr', '*' ] },
-  { lhs: 'pf', rhs: [ 'pr' ] },
-  { lhs: 'pr', rhs: [ 'e' ] },
-  { lhs: 'pr', rhs: [ '(', 'or', ')' ] }
+  { index: 0, lhs: 're', rhs: [ 'or' ] },
+  { index: 1, lhs: 'or', rhs: [ 'or', '+', 'cc' ] },
+  { index: 2, lhs: 'or', rhs: [ 'cc' ] },
+  { index: 3, lhs: 'cc', rhs: [ 'cc', 'pf' ] },
+  { index: 4, lhs: 'cc', rhs: [ 'pf' ] },
+  { index: 5, lhs: 'pf', rhs: [ 'pr', '*' ] },
+  { index: 6, lhs: 'pf', rhs: [ 'pr' ] },
+  { index: 7, lhs: 'pr', rhs: [ 'e' ] },
+  { index: 8, lhs: 'pr', rhs: [ '(', 'or', ')' ] }
 ];
 
 const Reductions = {
@@ -167,10 +167,10 @@ const getErrorMessage = function(error) {
              `\t${highlight(error.input, error.position)}`;
     case 'Parse Error':
       return `**Parse Error**\n\n` +
-            `At input RE:${error.position + 1}:\n` +
-            `\t${highlight(error.input, error.position)}\n\n` +
-            `Expected:\n\t${getSymbolNames(error.expected)}\n\n` +
-            `Got: '${error.got}'`;
+             `At input RE:${error.position + 1}:\n` +
+             `\t${highlight(error.input, error.position)}\n\n` +
+             `Expected:\n\t${getSymbolNames(error.expected)}\n\n` +
+             `Got: '${error.got}'`;
     default:
       return null;
   }
@@ -237,14 +237,21 @@ const parserDriver = function(tokenStream) {
       // Check if the next state is an accept state.
       accept = canAccept(peek(input));
     } else if (canReduce(nextSymbol)) {
-      let ruleIndex = Reductions[cfsm.state].rule;
-      let rule = GrammarRules[ruleIndex];
+      let rule = GrammarRules[Reductions[cfsm.state].rule];
       let symbol = '';
+
+      // Pop # of rhs symbols from stack.
       for (let i = 0; i < rule.rhs.length; ++i) {
         symbol = stack.pop().symbol;
       }
 
-      switch (ruleIndex) {
+      // Prepend the reduced symbol to input stream and go back to the state
+      // of TOS.
+      input.unshift(rule.lhs);
+      cfsm.goto(stack[stack.length - 1].state);
+
+      // Generate the code according to the rule applied.
+      switch (rule.index) {
         case 1:
           code += 'Or ';
           break;
@@ -260,10 +267,6 @@ const parserDriver = function(tokenStream) {
           break;
       }
 
-      // Prepend the reduced symbol to input stream and go back to the state
-      // of TOS.
-      input.unshift(rule.lhs);
-      cfsm.goto(stack[stack.length - 1].state);
     } else {
       // Expected symbols are all the possible cfsm transitions.
       let expected = cfsm.transitions().filter(t => t !== 'goto');
