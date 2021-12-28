@@ -270,8 +270,8 @@ const parserDriver = function(tokenStream) {
   return code;
 }
 
-const execute = function(stack, ins) {
-  if (ins.op === 'push') {
+const execute = {
+  push: (stack) => {
     // This is a primitive regular expression. It looks like:
     // (nextId) --symbol--> (nextId + 1)
 
@@ -296,7 +296,8 @@ const execute = function(stack, ins) {
       trailing: 'primitive'
     }
     stack.push(nfa);
-  } else if (ins.op === 'union') {
+  },
+  union: (stack) => {
     // Do the union operation on the 2 nfa on the stack top.
     if (stack.length < 2) {
       throw {
@@ -355,7 +356,8 @@ const execute = function(stack, ins) {
       trailing: 'union'
     }
     stack.push(nfa);
-  } else if (ins.op === 'concat') {
+  },
+  concat: (stack) => {
     if (stack.length < 2) {
       throw {
         type: 'Stack Underflow',
@@ -407,7 +409,8 @@ const execute = function(stack, ins) {
       trailing: y.trailing
     };
     stack.push(nfa);
-  } else if (ins.op === 'kleene') {
+  },
+  kleene: (stack) => {
     if (stack.length < 1) {
       throw {
         type: 'Stack Underflow',
@@ -438,18 +441,13 @@ const execute = function(stack, ins) {
       trailing: 'kleene'
     }
     stack.push(nfa);
-  } else {
-    throw {
-      type: 'Invalid Op',
-      op: ins.op
-    }
   }
 }
 
 const generateNFA = function(code) {
   let stack = [];
   for (ins of code) {
-    execute(stack, ins);
+    execute[ins.op](stack);
   }
   return stack[0];
 }
