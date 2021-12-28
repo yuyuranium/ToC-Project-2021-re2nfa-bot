@@ -369,17 +369,7 @@ const execute = function(stack, ins) {
     let edges = [];
     let states = [];
 
-    if (x.trailing === 'kleene') {
-      state = x.states.concat(y.states);
-      edges = [
-        {
-          name: 'λ',
-          from: x.final,
-          to: y.init,
-          dot: { headport: 'w', tailport: 'e' }
-        }
-      ].concat(x.edges).concat(y.edges);
-    } else {
+    if (x.trailing !== 'kleene') {
       // We can optimize the concat operation by connecting the final state of x
       // to all the states that the initial state of y connects to.
       for (state of y.states) {
@@ -397,7 +387,17 @@ const execute = function(stack, ins) {
 
       edges = x.edges.concat(y.edges);
       states = x.states.concat(y.states.filter(s => s !== y.init));
-    }
+    } else {
+      state = x.states.concat(y.states);
+      edges = [
+        {
+          name: 'λ',
+          from: x.final,
+          to: y.init,
+          dot: { headport: 'w', tailport: 'e' }
+        }
+      ].concat(x.edges).concat(y.edges);
+   }
 
     let nfa = {
       init: x.init,
