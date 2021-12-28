@@ -307,9 +307,6 @@ const execute = function(stack, ins) {
     let y = stack.pop();
     let x = stack.pop();
 
-    let init = { id: x.init.id };
-    let final = { id: y.final.id + 2 };
-
     for (state of x.states) {
       state.id += 1;
     }
@@ -317,6 +314,9 @@ const execute = function(stack, ins) {
     for (state of y.states) {
       state.id += 1;
     }
+
+    let init = { id: x.init.id - 1 };
+    let final = { id: y.final.id + 1 };
 
     let states = [init, final].concat(x.states).concat(y.states);
     let edges = [
