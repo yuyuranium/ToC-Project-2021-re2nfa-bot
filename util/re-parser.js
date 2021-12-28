@@ -292,7 +292,8 @@ const execute = function(stack, ins) {
           to: final,
           dot: { headport: 'w', tailport: 'e' }
         }
-      ]
+      ],
+      trailing: 'primitive'
     }
     stack.push(nfa);
   } else if (ins.op === 'union') {
@@ -318,7 +319,6 @@ const execute = function(stack, ins) {
     let init = { id: x.init.id - 1 };
     let final = { id: y.final.id + 1 };
 
-    let states = [init, final].concat(x.states).concat(y.states);
     let edges = [
       {
         name: 'λ',
@@ -345,14 +345,15 @@ const execute = function(stack, ins) {
         dot: { headport: 'sw', tailport: 'ne' }
       }
     ].concat(x.edges).concat(y.edges);
+    let states = [init, final].concat(x.states).concat(y.states);
 
     let nfa = {
       init: init,
       final: final,
       states: states,
-      edges: edges
+      edges: edges,
+      trailing: 'union'
     }
-    
     stack.push(nfa);
   } else if (ins.op === 'concat') {
     if (stack.length < 2) {
@@ -362,9 +363,50 @@ const execute = function(stack, ins) {
       };
     }
 
-    let x = stack.pop();
     let y = stack.pop();
-    stack.push(`(${y}->${x})`);
+    let x = stack.pop();
+
+    let edges = [];
+    let states = [];
+
+    if (x.trailing === 'kleene') {
+      state = x.states.concat(y.states);
+      edges = [
+        {
+          name: 'λ',
+          from: x.final,
+          to: y.init,
+          dot: { headport: 'w', tailport: 'e' }
+        }
+      ].concat(x.edges).concat(y.edges);
+    } else {
+      // We can optimize the concat operation by connecting the final state of x
+      // to all the states that the initial state of y connects to.
+      for (state of y.states) {
+        state.id -= 1;
+      }
+
+      for (edge of y.edges) {
+        if (edge.from === y.init) {
+          edge.from = x.final
+        }
+        if (edge.to === y.init) {
+          edge.to = x.final
+        }
+      }
+
+      edges = x.edges.concat(y.edges);
+      states = x.states.concat(y.states.filter(s => s !== y.init));
+    }
+
+    let nfa = {
+      init: x.init,
+      final: y.final,
+      states: states,
+      edges: edges,
+      trailing: y.trailing
+    };
+    stack.push(nfa);
   } else if (ins.op === 'kleene') {
     if (stack.length < 1) {
       throw {
@@ -374,7 +416,28 @@ const execute = function(stack, ins) {
     }
 
     let x = stack.pop();
-    stack.push(`(${x})*`);
+
+    let nfa = {
+      init: x.init,
+      final: x.final,
+      states: x.states,
+      edges: [
+        {
+          name: 'λ',
+          from: x.init,
+          to: x.final,
+          dot: { headport: 'n', tailport: 'n' }
+        },
+        {
+          name: 'λ',
+          from: x.final,
+          to: x.init,
+          dot: { headport: 's', tailport: 's' }
+        }
+      ].concat(x.edges),
+      trailing: 'kleene'
+    }
+    stack.push(nfa);
   } else {
     throw {
       type: 'Invalid Op',
