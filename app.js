@@ -16,8 +16,12 @@ const bot = linebot({
 
 bot.on('message', (event) => {
   try {
-    let result = reParser.compile(event.message.text);
-    event.reply(`nfa:\n${result}`);
+    let nfa = reParser.compile(event.message.text);
+    let reply = '';
+    for (edge of nfa.edges) {
+      reply += `${edge.from.id} -${edge.name}> ${edge.to.id}\n`;
+    }
+    event.reply(reply.slice(0, -1));
   } catch (e) {
     event.reply(reParser.getErrorMessage(e));
   }

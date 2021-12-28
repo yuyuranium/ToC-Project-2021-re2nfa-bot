@@ -325,25 +325,25 @@ const execute = {
         name: 'λ',
         from: init,
         to: x.init,
-        dot: { headport: 'sw', tailport: 'ne' }
+        dot: { headport: 'w', tailport: 'ne' }
       },
       {
         name: 'λ',
         from: init,
         to: y.init,
-        dot: { headport: 'nw', tailport: 'se' }
+        dot: { headport: 'w', tailport: 'se' }
       },
       {
         name: 'λ',
         from: x.final,
         to: final,
-        dot: { headport: 'nw', tailport: 'se' }
+        dot: { headport: 'nw', tailport: 'e' }
       },
       {
         name: 'λ',
         from: y.final,
         to: final,
-        dot: { headport: 'sw', tailport: 'ne' }
+        dot: { headport: 'sw', tailport: 'e' }
       }
     ].concat(x.edges).concat(y.edges);
     let states = [init, final].concat(x.states).concat(y.states);
@@ -373,12 +373,15 @@ const execute = {
 
     if (x.trailing !== 'kleene') {
       // We can optimize the concat operation by connecting the final state of x
-      // to all the states that the initial state of y connects to.
+      // to all the states that the initial state of y connects to if the
+      // trailing operation of y is not 'kleene closure'.
+        
       for (state of y.states) {
-        state.id -= 1;
+        state.id -= 1;  // reduce the id of all y's state by one
       }
 
       for (edge of y.edges) {
+        // Connect all the states that y's init state connects to to x's final.
         if (edge.from === y.init) {
           edge.from = x.final
         }
@@ -387,10 +390,11 @@ const execute = {
         }
       }
 
-      edges = x.edges.concat(y.edges);
+      // Exclude y's initial state
       states = x.states.concat(y.states.filter(s => s !== y.init));
+      edges = x.edges.concat(y.edges);  // add all the edges of x and y
     } else {
-      state = x.states.concat(y.states);
+      states = x.states.concat(y.states);  // add all the states of x and y
       edges = [
         {
           name: 'λ',
@@ -444,7 +448,19 @@ const execute = {
   }
 }
 
-const generateNFA = function(code) {
+const buildNfaStateMachine = function(nfa) {
+  for (edge of nfa.edges) {
+    edge.from = `q${edge.from.id}`;
+    edge.to = `q${edge.to.id}`;
+  }
+
+  return new StateMachine({
+    init: `q${nfa.init.id}`,
+    transitions: nfa.edges
+  });
+}
+
+const generateNfa = function(code) {
   let stack = [];
   for (ins of code) {
     execute[ins.op](stack);
@@ -480,9 +496,10 @@ const compile = function(reString) {
   // cfsm. Get the generated code of parsing result.
   let code = parserDriver(tokenStream);
 
-  // @todo generate a nfa based on the code
-  let nfa = generateNFA(code);
-  return nfa;
+  let nfa = generateNfa(code);
+  let fsm = buildNfaStateMachine(nfa);
+  console.log(visualize(fsm, { orientation: 'horizontal' }));
+  return nfa;  // @todo return multiple data structures
 }
 
 module.exports = {
