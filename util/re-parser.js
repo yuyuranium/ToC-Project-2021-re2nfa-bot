@@ -272,8 +272,31 @@ const parserDriver = function(tokenStream) {
 
 const execute = function(stack, ins) {
   if (ins.op === 'push') {
-    stack.push(`(${ins.symbol})`);
+    // This is a primitive regular expression. It looks like:
+    // (nextId) --symbol--> (nextId + 1)
+
+    // Look up the previous one's final state
+    let tos = stack[stack.length - 1];
+    let nextId = (tos)? tos.final.id + 1 : 0;
+
+    let init = { id: nextId };
+    let final = { id: nextId + 1 };
+    let nfa = {
+      init: init,
+      final: final,
+      states: [init, final],
+      edges: [
+        {
+          name: ins.symbol,
+          from: init,
+          to: final,
+          dot: { headport: 'w', tailport: 'e' }
+        }
+      ]
+    }
+    stack.push(nfa);
   } else if (ins.op === 'union') {
+    // Do the union operation on the 2 nfa on the stack top.
     if (stack.length < 2) {
       throw {
         type: 'Stack Underflow',
@@ -281,9 +304,56 @@ const execute = function(stack, ins) {
       };
     }
 
-    let x = stack.pop();
     let y = stack.pop();
-    stack.push(`(${y}|${x})`);
+    let x = stack.pop();
+
+    let init = { id: x.init.id };
+    let final = { id: y.final.id + 2 };
+
+    for (state of x.states) {
+      state.id += 1;
+    }
+
+    for (state of y.states) {
+      state.id += 1;
+    }
+
+    let states = [init, final].concat(x.states).concat(y.states);
+    let edges = [
+      {
+        name: 'λ',
+        from: init,
+        to: x.init,
+        dot: { headport: 'sw', tailport: 'ne' }
+      },
+      {
+        name: 'λ',
+        from: init,
+        to: y.init,
+        dot: { headport: 'nw', tailport: 'se' }
+      },
+      {
+        name: 'λ',
+        from: x.final,
+        to: final,
+        dot: { headport: 'nw', tailport: 'se' }
+      },
+      {
+        name: 'λ',
+        from: y.final,
+        to: final,
+        dot: { headport: 'sw', tailport: 'ne' }
+      }
+    ].concat(x.edges).concat(y.edges);
+
+    let nfa = {
+      init: init,
+      final: final,
+      states: states,
+      edges: edges
+    }
+    
+    stack.push(nfa);
   } else if (ins.op === 'concat') {
     if (stack.length < 2) {
       throw {
