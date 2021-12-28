@@ -58,15 +58,15 @@ const Terminals = [
 ];
 
 const GrammarRules = [
-  { index: 0, lhs: 're', rhs: [ 'or' ] },
-  { index: 1, lhs: 'or', rhs: [ 'or', '+', 'cc' ] },
-  { index: 2, lhs: 'or', rhs: [ 'cc' ] },
-  { index: 3, lhs: 'cc', rhs: [ 'cc', 'pf' ] },
-  { index: 4, lhs: 'cc', rhs: [ 'pf' ] },
-  { index: 5, lhs: 'pf', rhs: [ 'pr', '*' ] },
-  { index: 6, lhs: 'pf', rhs: [ 'pr' ] },
-  { index: 7, lhs: 'pr', rhs: [ 'e' ] },
-  { index: 8, lhs: 'pr', rhs: [ '(', 'or', ')' ] }
+  { lhs: 're', rhs: [ 'or' ] },
+  { lhs: 'or', rhs: [ 'or', '+', 'cc' ] },
+  { lhs: 'or', rhs: [ 'cc' ] },
+  { lhs: 'cc', rhs: [ 'cc', 'pf' ] },
+  { lhs: 'cc', rhs: [ 'pf' ] },
+  { lhs: 'pf', rhs: [ 'pr', '*' ] },
+  { lhs: 'pf', rhs: [ 'pr' ] },
+  { lhs: 'pr', rhs: [ 'e' ] },
+  { lhs: 'pr', rhs: [ '(', 'or', ')' ] }
 ];
 
 const Reductions = {
@@ -159,23 +159,6 @@ const highlight = function(input, position) {
   ].join('');
 }
 
-const getErrorMessage = function(error) {
-  switch (error.type) {
-    case 'Unknown Token':
-      return `**Unknown Token**\n\n` +
-             `At input:${error.position + 1}:\n` +
-             `\t${highlight(error.input, error.position)}`;
-    case 'Parse Error':
-      return `**Parse Error**\n\n` +
-             `At input RE:${error.position + 1}:\n` +
-             `\t${highlight(error.input, error.position)}\n\n` +
-             `Expected:\n\t${getSymbolNames(error.expected)}\n\n` +
-             `Got: '${error.got}'`;
-    default:
-      return null;
-  }
-}
-
 const buildTokenStream = function(reString) {
   let tokenStream = reString.split('');
   tokenStream.push('$');
@@ -199,7 +182,7 @@ const parserDriver = function(tokenStream) {
   let accept = false;
   let stack = [];
   let input = tokenStream;
-  let code = '';
+  let code = [];
   let cursor = 0;
 
   cfsm.goto('S0');                          // start from initial state
@@ -251,18 +234,18 @@ const parserDriver = function(tokenStream) {
       cfsm.goto(stack[stack.length - 1].state);
 
       // Generate the code according to the rule applied.
-      switch (rule.index) {
-        case 1:  // OrExpr = OrExpr '+' ConcatExpr
-          code += 'union\n';
+      switch (rule) {
+        case GrammarRules[1]:  // OrExpr = OrExpr '+' ConcatExpr
+          code.push({ op: 'union' });
           break;
-        case 3:  // ConcatExpr = ConcatExpr PostfixExpr
-          code += 'concat\n';
+        case GrammarRules[3]:  // ConcatExpr = ConcatExpr PostfixExpr
+          code.push({ op: 'concat' });
           break;
-        case 5:  // PostfixExpr = PrimExpr '*'
-          code += 'kleene\n';
+        case GrammarRules[5]:  // PostfixExpr = PrimExpr '*'
+          code.push({ op: 'kleene' });
           break;
-        case 7:  // PrimExpr = 'e'
-          code += `push '${symbol}'\n`;
+        case GrammarRules[7]:  // PrimExpr = 'e'
+          code.push({ op: 'push', symbol: symbol });
         default:
           break;
       }
@@ -284,73 +267,75 @@ const parserDriver = function(tokenStream) {
       };
     }
   }
-  return code.slice(0, -1);  // remove trailing '\n'
+  return code;
 }
 
-const vm = function(stack, op, symbol = null) {
-  if (op === 'push') {
-    stack.push(symbol);
-  } else if (op === 'union') {
+const execute = function(stack, ins) {
+  if (ins.op === 'push') {
+    stack.push(`(${ins.symbol})`);
+  } else if (ins.op === 'union') {
     if (stack.length < 2) {
       throw {
         type: 'Stack Underflow',
-        ins: 'union'
+        op: 'union'
       };
     }
 
     let x = stack.pop();
     let y = stack.pop();
     stack.push(`(${y}|${x})`);
-  } else if (op === 'concat') {
+  } else if (ins.op === 'concat') {
     if (stack.length < 2) {
       throw {
         type: 'Stack Underflow',
-        ins: 'concat'
+        op: 'concat'
       };
     }
 
     let x = stack.pop();
     let y = stack.pop();
     stack.push(`(${y}->${x})`);
-  } else if (op === 'kleene') {
+  } else if (ins.op === 'kleene') {
     if (stack.length < 1) {
       throw {
         type: 'Stack Underflow',
-        ins: 'kleene'
+        op: 'kleene'
       };
     }
 
     let x = stack.pop();
     stack.push(`(${x})*`);
+  } else {
+    throw {
+      type: 'Invalid Op',
+      op: ins.op
+    }
   }
 }
 
 const generateNFA = function(code) {
   let stack = [];
-  let instructions = code.split('\n');
-
-  for (let i = 0; i < instructions.length; ++i) {
-    let ins = instructions[i];
-    console.log(ins);
-    switch (ins) {
-      case 'union':
-      case 'concat':
-      case 'kleene':
-        vm(stack, ins);
-        break;
-      default:
-        let res = ins.match(/^push \'([a-zA-Z0-9])\'$/);
-
-        if (!res) {
-          throw {
-            type: 'Invalid Instruction'
-          };
-        }
-
-        vm(stack, 'push', res[1]);
-    }
+  for (ins of code) {
+    execute(stack, ins);
   }
   return stack[0];
+}
+
+const getErrorMessage = function(error) {
+  switch (error.type) {
+    case 'Unknown Token':
+      return `**Unknown Token**\n\n` +
+             `At input:${error.position + 1}:\n` +
+             `\t${highlight(error.input, error.position)}`;
+    case 'Parse Error':
+      return `**Parse Error**\n\n` +
+             `At input RE:${error.position + 1}:\n` +
+             `\t${highlight(error.input, error.position)}\n\n` +
+             `Expected:\n\t${getSymbolNames(error.expected)}\n\n` +
+             `Got: '${error.got}'`;
+    default:
+      return null;
+  }
 }
 
 const compile = function(reString) {
