@@ -290,9 +290,10 @@ const execute = {
           name: ins.symbol,
           from: init,
           to: final,
-          dot: { headport: 'w', tailport: 'e' }
+          //dot: { headport: 'w', tailport: 'e' }
         }
       ],
+      heading: 'primitive',
       trailing: 'primitive'
     }
     stack.push(nfa);
@@ -309,13 +310,12 @@ const execute = {
     let y = stack.pop();
     let x = stack.pop();
 
-    for (state of x.states) {
-      state.id += 1;
-    }
+    x.states.map(s => s.id += 1);  // increase the id of all x's state by one
+    y.states.map(s => s.id += 1);  // increase the id of all y's state by one
 
-    for (state of y.states) {
-      state.id += 1;
-    }
+    /* Optimized
+    y.states.map(s => s.id -= 2);
+    */
 
     let init = { id: x.init.id - 1 };
     let final = { id: y.final.id + 1 };
@@ -325,34 +325,41 @@ const execute = {
         name: 'λ',
         from: init,
         to: x.init,
-        dot: { headport: 'w', tailport: 'ne' }
       },
       {
         name: 'λ',
         from: init,
         to: y.init,
-        dot: { headport: 'w', tailport: 'se' }
       },
       {
         name: 'λ',
         from: x.final,
         to: final,
-        dot: { headport: 'nw', tailport: 'e' }
       },
       {
         name: 'λ',
         from: y.final,
         to: final,
-        dot: { headport: 'sw', tailport: 'e' }
       }
     ].concat(x.edges).concat(y.edges);
     let states = [init, final].concat(x.states).concat(y.states);
+    
+    // Optimized
+    /*
+    x.edges.filter(e => e.from === x.final).map(e => e.from = y.final);
+    x.edges.filter(e => e.to === x.final).map(e => e.to = y.final);
+    y.edges.filter(e => e.from === y.init).map(e => e.from = x.init);
+    y.edges.filter(e => e.to === y.init).map(e => e.to = x.init);
+    let edges = x.edges.concat(y.edges);
+    let states = x.states.filter(s => s !== x.final).concat(y.states.filter(s => s !== y.init));
+    */
 
     let nfa = {
       init: init,
       final: final,
       states: states,
       edges: edges,
+      heading: 'union',
       trailing: 'union'
     }
     stack.push(nfa);
@@ -371,24 +378,16 @@ const execute = {
     let edges = [];
     let states = [];
 
-    if (x.trailing !== 'kleene') {
+    if (!(x.trailing === 'kleene' && y.heading === 'kleene')) {
       // We can optimize the concat operation by connecting the final state of x
-      // to all the states that the initial state of y connects to if the
-      // trailing operation of y is not 'kleene closure'.
+      // to all the states that the initial state of y connects to if both the
+      // trailing operation of x and the heading operation of y are not
+      // 'kleene closure'.
         
-      for (state of y.states) {
-        state.id -= 1;  // reduce the id of all y's state by one
-      }
+      y.states.map(s => s.id -= 1);  // reduce the id of all y's state by one
 
-      for (edge of y.edges) {
-        // Connect all the states that y's init state connects to to x's final.
-        if (edge.from === y.init) {
-          edge.from = x.final
-        }
-        if (edge.to === y.init) {
-          edge.to = x.final
-        }
-      }
+      y.edges.filter(e => e.from === y.init).map(e => e.from = x.final);
+      y.edges.filter(e => e.to === y.init).map(e => e.to = x.final);
 
       // Exclude y's initial state
       states = x.states.concat(y.states.filter(s => s !== y.init));
@@ -400,7 +399,6 @@ const execute = {
           name: 'λ',
           from: x.final,
           to: y.init,
-          dot: { headport: 'w', tailport: 'e' }
         }
       ].concat(x.edges).concat(y.edges);
    }
@@ -410,6 +408,7 @@ const execute = {
       final: y.final,
       states: states,
       edges: edges,
+      heading: x.heading,
       trailing: y.trailing
     };
     stack.push(nfa);
@@ -424,10 +423,19 @@ const execute = {
 
     let x = stack.pop();
 
+    /* Optimized
+    x.edges.filter(e => e.from == x.final).map(e => e.from = x.init);
+    x.edges.filter(e => e.to == x.final).map(e => e.to = x.init);
+
+    let states = x.states.filter(s => s != x.final);
+    */
+
+    let states = x.states;
+
     let nfa = {
       init: x.init,
       final: x.final,
-      states: x.states,
+      states: states,
       edges: [
         {
           name: 'λ',
@@ -442,6 +450,7 @@ const execute = {
           dot: { headport: 's', tailport: 's' }
         }
       ].concat(x.edges),
+      heading: 'kleene',
       trailing: 'kleene'
     }
     stack.push(nfa);
@@ -498,8 +507,10 @@ const compile = function(reString) {
 
   let nfa = generateNfa(code);
   let fsm = buildNfaStateMachine(nfa);
-  console.log(visualize(fsm, { orientation: 'horizontal' }));
-  return nfa;  // @todo return multiple data structures
+  return {
+    nfa: nfa,
+    fsm: fsm
+  }
 }
 
 module.exports = {
