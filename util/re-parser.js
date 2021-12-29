@@ -47,7 +47,6 @@
  *       variable back to the input stream and go back to the state fo TOS.
  */
 const StateMachine = require('javascript-state-machine');
-const visualize = require('javascript-state-machine/lib/visualize');
 
 const NonTerminals = [
   'or', 'cc', 'pf', 'pr'
@@ -310,8 +309,8 @@ const execute = {
     let y = stack.pop();
     let x = stack.pop();
 
-    x.states.map(s => s.id += 1);  // increase the id of all x's state by one
-    y.states.map(s => s.id += 1);  // increase the id of all y's state by one
+    x.states.forEach(s => s.id += 1);  // increase the id of all x's state by one
+    y.states.forEach(s => s.id += 1);  // increase the id of all y's state by one
 
     /* Optimized
     y.states.map(s => s.id -= 2);
@@ -384,10 +383,10 @@ const execute = {
       // trailing operation of x and the heading operation of y are not
       // 'kleene closure'.
         
-      y.states.map(s => s.id -= 1);  // reduce the id of all y's state by one
+      y.states.forEach(s => s.id -= 1);  // reduce the id of all y's state by one
 
-      y.edges.filter(e => e.from === y.init).map(e => e.from = x.final);
-      y.edges.filter(e => e.to === y.init).map(e => e.to = x.final);
+      y.edges.filter(e => e.from === y.init).forEach(e => e.from = x.final);
+      y.edges.filter(e => e.to === y.init).forEach(e => e.to = x.final);
 
       // Exclude y's initial state
       states = x.states.concat(y.states.filter(s => s !== y.init));
