@@ -47,6 +47,7 @@
  *       variable back to the input stream and go back to the state fo TOS.
  */
 const StateMachine = require('javascript-state-machine');
+const visualize = require('javascript-state-machine/lib/visualize');
 
 const NonTerminals = [
   'or', 'cc', 'pf', 'pr'
@@ -440,13 +441,13 @@ const execute = {
           name: 'λ',
           from: x.init,
           to: x.final,
-          dot: { headport: 'n', tailport: 'n' }
+          dot: { /*headport: 'n', tailport: 'n',*/ constraint: 'false' }
         },
         {
           name: 'λ',
           from: x.final,
           to: x.init,
-          dot: { headport: 's', tailport: 's' }
+          dot: { /*headport: 's', tailport: 's',*/ constraint: 'false' }
         }
       ].concat(x.edges),
       heading: 'kleene',
@@ -457,14 +458,22 @@ const execute = {
 }
 
 const buildNfaStateMachine = function(nfa) {
+  let transitions = [];
   for (edge of nfa.edges) {
-    edge.from = `q${edge.from.id}`;
-    edge.to = `q${edge.to.id}`;
+    transitions.push({
+      name: edge.name,
+      from: `q${edge.from.id}`,
+      to: `q${edge.to.id}`,
+      dot: edge.dot
+    })
   }
 
   return new StateMachine({
     init: `q${nfa.init.id}`,
-    transitions: nfa.edges
+    transitions: transitions,
+    data: {
+      final: `q${nfa.final.id}`
+    }
   });
 }
 
@@ -474,6 +483,15 @@ const generateNfa = function(code) {
     execute[ins.op](stack);
   }
   return stack[0];
+}
+
+const getDotScript = function(fsm) {
+  let lines = visualize(fsm, { orientation: 'horizontal' }).split('\n');
+  lines.splice(2, 0, `  "" [shape = none, width = 0.0]`);
+  lines.splice(2, 0, `  "" -> "q0";`);
+  lines.splice(2, 0, `  node [shape = circle];`);
+  lines.splice(2, 0, `  node [shape = doublecircle]; ${fsm.final};`);
+  return lines.join('\n');
 }
 
 const getErrorMessage = function(error) {
@@ -506,13 +524,9 @@ const compile = function(reString) {
 
   let nfa = generateNfa(code);
   let fsm = buildNfaStateMachine(nfa);
-  return {
-    nfa: nfa,
-    fsm: fsm
-  }
+  return fsm;
 }
 
 module.exports = {
-  compile: compile,
-  getErrorMessage: getErrorMessage
+  compile, getErrorMessage, getDotScript
 };

@@ -44,20 +44,16 @@ const upload2Imgur = async function(filename) {
 
 bot.on('message', async (event) => {
   try {
-    let { nfa, fsm } = reParser.compile(event.message.text);
+    let fsm = reParser.compile(event.message.text);
 
-    let dotScript = visualize(fsm, { orientation: 'horizontal' })
+    let dotScript = reParser.getDotScript(fsm);
     await render(dotScript);
 
-    let edges = '';
-    for (edge of nfa.edges) {
-      edges += `${edge.from} -${edge.name}> ${edge.to}\n`;
-    }
     let res = await upload2Imgur(OUTPUT_FILE);
     event.reply([
       {
         type: 'text',
-        text: edges.slice(0, -1)
+        text: 'OK'
       },
       {
         type: 'image',
