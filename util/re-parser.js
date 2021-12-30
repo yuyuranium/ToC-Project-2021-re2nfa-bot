@@ -134,7 +134,7 @@ const getSymbolNames = function(symbolList) {
         symbolNames += 'PrimExpr';
         break;
       case 'e':
-        symbolNames += '[a-zA-Z0-9]';
+        symbolNames += '[a-zA-Z0-9λ(^)]';
         break;
       default:
         if (Terminals.includes(symbol)) {
@@ -169,7 +169,7 @@ const peek = function(inputStream) {
   if (inputStream.length == 0) return null;
 
   let symbol = inputStream[0];  // peek top of input stream
-  if (symbol.match(/^[a-zA-Z0-9]$/)) {
+  if (symbol.match(/^[a-zA-Z0-9\^λ]$/)) {
     return 'e';
   } else if (NonTerminals.includes(symbol) || Terminals.includes(symbol)) {
     return symbol;
@@ -281,20 +281,28 @@ const execute = {
 
     let init = { id: nextId };
     let final = { id: nextId + 1 };
+    let symbol = ins.symbol, op = 'primitive';
+
+    // To record whether this primitive is the lambda transition.
+    if (ins.symbol === '^' || ins.symbol === 'λ') {
+      symbol = 'λ';
+      op = 'lambda';
+    }
+
     let nfa = {
       init: init,
       final: final,
       states: [init, final],
       edges: [
         {
-          name: ins.symbol,
+          name: symbol,
           from: init,
           to: final,
-          //dot: { headport: 'w', tailport: 'e' }
         }
       ],
-      heading: 'primitive',
-      trailing: 'primitive'
+      last: op,
+      heading: op,
+      trailing: op
     }
     stack.push(nfa);
   },
@@ -310,8 +318,14 @@ const execute = {
     let y = stack.pop();
     let x = stack.pop();
 
+    if (x.last === 'lambda' && y.last === 'lambda') {
+      stack.push(x);  // λ+λ is just λ
+      return;
+    }
+
     x.states.forEach(s => s.id += 1);  // increase the id of all x's state by one
     y.states.forEach(s => s.id += 1);  // increase the id of all y's state by one
+
 
     /* Optimized
     y.states.map(s => s.id -= 2);
@@ -359,6 +373,7 @@ const execute = {
       final: final,
       states: states,
       edges: edges,
+      last: 'union',
       heading: 'union',
       trailing: 'union'
     }
@@ -375,6 +390,16 @@ const execute = {
     let y = stack.pop();
     let x = stack.pop();
 
+    // If any of x or y is lambda transition, then we can simplify to the other
+    if (x.last === 'lambda') {
+      y.states.forEach(s => s.id -= 2);  // reduce the id of all y's state by 2
+      stack.push(y);
+      return;
+    } else if (y.last === 'lambda') {
+      stack.push(x);
+      return;
+    }
+
     let edges = [];
     let states = [];
 
@@ -384,7 +409,7 @@ const execute = {
       // trailing operation of x and the heading operation of y are not
       // 'kleene closure'.
         
-      y.states.forEach(s => s.id -= 1);  // reduce the id of all y's state by one
+      y.states.forEach(s => s.id -= 1);  // reduce the id of all y's state by 1
 
       y.edges.filter(e => e.from === y.init).forEach(e => e.from = x.final);
       y.edges.filter(e => e.to === y.init).forEach(e => e.to = x.final);
@@ -408,6 +433,7 @@ const execute = {
       final: y.final,
       states: states,
       edges: edges,
+      last: 'concat',
       heading: x.heading,
       trailing: y.trailing
     };
@@ -422,6 +448,11 @@ const execute = {
     }
 
     let x = stack.pop();
+
+    if (x.last === 'lambda') {
+      stack.push(x);  // λ* has no effect
+      return;
+    }
 
     /* Optimized
     x.edges.filter(e => e.from == x.final).map(e => e.from = x.init);
@@ -441,15 +472,16 @@ const execute = {
           name: 'λ',
           from: x.init,
           to: x.final,
-          dot: { /*headport: 'n', tailport: 'n',*/ constraint: 'false' }
+          dot: { constraint: 'false' }
         },
         {
           name: 'λ',
           from: x.final,
           to: x.init,
-          dot: { /*headport: 's', tailport: 's',*/ constraint: 'false' }
+          dot: { constraint: 'false' }
         }
       ].concat(x.edges),
+      last: 'kleene',
       heading: 'kleene',
       trailing: 'kleene'
     }
@@ -482,14 +514,23 @@ const generateNfa = function(code) {
   for (ins of code) {
     execute[ins.op](stack);
   }
-  return stack[0];
+
+  let nfa = stack[0];
+  if (nfa.last === 'lambda') {
+    // nfa is just (q0) --λ--> (q1), so simplify to -->((q0))
+    nfa.states = [nfa.init];
+    nfa.edges = [];
+    nfa.final = nfa.init;
+  }
+
+  return nfa;
 }
 
 const getDotScript = function(fsm) {
   let lines = visualize(fsm, { orientation: 'horizontal' }).split('\n');
   lines.splice(2, 0, `  "" [shape = none, width = 0.0]`);
   lines.splice(2, 0, `  "" -> "q0";`);
-  lines.splice(2, 0, `  node [shape = circle];`);
+  lines.splice(2, 0, `  node [shape = circle, width = 1.0];`);
   lines.splice(2, 0, `  node [shape = doublecircle]; ${fsm.final};`);
   return lines.join('\n');
 }

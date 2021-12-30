@@ -8,19 +8,7 @@ const axios = require('axios')
 const fs = require('fs');
 
 const PORT = 6459;
-const OUTPUT_FILE = './db/tmp/output.png';
-
-dotenv.config();
-
-const render = CliRenderer({ outputFile: OUTPUT_FILE, format: 'png' });
-
-const app = express();
-
-const bot = linebot({
-  channelId: process.env.CHANNEL_ID,
-  channelSecret: process.env.CHANNEL_SECRET,
-  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
-});
+const OUTPUT_FILE = '/tmp/output.png';
 
 const upload2Imgur = async function(filename) {
   try {
@@ -42,6 +30,18 @@ const upload2Imgur = async function(filename) {
   }
 }
 
+dotenv.config();
+
+const render = CliRenderer({ outputFile: OUTPUT_FILE, format: 'png' });
+
+const app = express();
+
+const bot = linebot({
+  channelId: process.env.CHANNEL_ID,
+  channelSecret: process.env.CHANNEL_SECRET,
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
+});
+
 bot.on('message', async (event) => {
   try {
     let fsm = reParser.compile(event.message.text);
@@ -53,7 +53,7 @@ bot.on('message', async (event) => {
     event.reply([
       {
         type: 'text',
-        text: 'OK'
+        text: `That's nice.`
       },
       {
         type: 'image',
