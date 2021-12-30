@@ -44,7 +44,7 @@ const bot = linebot({
 
 bot.on('message', async (event) => {
   try {
-    let fsm = reParser.compile(event.message.text);
+    let fsm = reParser.compile(event.message.text, optimize=true);
 
     let dotScript = reParser.getDotScript(fsm);
     await render(dotScript);

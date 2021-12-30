@@ -1,3 +1,4 @@
+const util = require('util');
 /**
  * # This is a bottom-up parser for simple regular expression.
  *
@@ -255,7 +256,7 @@ const parserDriver = function(tokenStream) {
 
       // Plus, symbols that can trigger reduction also count.
       if (Reductions[cfsm.state]) {
-        expected = expected.concat(Reductions[cfsm.state].peek);
+        expected = [...expected, ...Reductions[cfsm.state].peek];
       }
 
       throw {
@@ -271,13 +272,13 @@ const parserDriver = function(tokenStream) {
 }
 
 const execute = {
-  push: (stack) => {
+  push: (stack, _optimize) => {
     // This is a primitive regular expression. It looks like:
     // (nextId) --symbol--> (nextId + 1)
 
     // Look up the previous one's final state
     let tos = stack[stack.length - 1];
-    let nextId = (tos)? tos.final.id + 1 : 0;
+    let nextId = (tos)? tos.maxId + 1 : 0;
 
     let init = { id: nextId };
     let final = { id: nextId + 1 };
@@ -300,6 +301,7 @@ const execute = {
           to: final,
         }
       ],
+      maxId: final.id,
       last: op,
       heading: op,
       trailing: op
@@ -332,7 +334,7 @@ const execute = {
     */
 
     let init = { id: x.init.id - 1 };
-    let final = { id: y.final.id + 1 };
+    let final = { id: y.maxId + 2 };
 
     let edges = [
       {
@@ -354,9 +356,11 @@ const execute = {
         name: 'λ',
         from: y.final,
         to: final,
-      }
-    ].concat(x.edges).concat(y.edges);
-    let states = [init, final].concat(x.states).concat(y.states);
+      },
+      ...x.edges,
+      ...y.edges
+    ];
+    let states = [init, final, ...x.states, ...y.states];
     
     // Optimized
     /*
@@ -373,13 +377,14 @@ const execute = {
       final: final,
       states: states,
       edges: edges,
+      maxId: final.id,
       last: 'union',
       heading: 'union',
       trailing: 'union'
     }
     stack.push(nfa);
   },
-  concat: (stack) => {
+  concat: (stack, optimize) => {
     if (stack.length < 2) {
       throw {
         type: 'Stack Underflow',
@@ -390,56 +395,68 @@ const execute = {
     let y = stack.pop();
     let x = stack.pop();
 
-    // If any of x or y is lambda transition, then we can simplify to the other
-    if (x.last === 'lambda') {
-      y.states.forEach(s => s.id -= 2);  // reduce the id of all y's state by 2
-      stack.push(y);
-      return;
-    } else if (y.last === 'lambda') {
-      stack.push(x);
-      return;
+    if (optimize) {
+      // If any of x or y is lambda, then we can simplify to the other.
+      if (x.last === 'lambda') {
+        // Reduce the id of all y's state by 2.
+        y.states.forEach(s => s.id -= 2);
+        stack.push(y);
+        return;
+      } else if (y.last === 'lambda') {
+        stack.push(x);
+        return;
+      }
     }
 
+    let final;
+    let maxId = y.maxId;
     let edges = [];
     let states = [];
 
     if (!(x.trailing === 'kleene' && y.heading === 'kleene')) {
-      // We can optimize the concat operation by connecting the final state of x
-      // to all the states that the initial state of y connects to if both the
-      // trailing operation of x and the heading operation of y are not
-      // 'kleene closure'.
+      // We can optimize the concat operation by connecting all the states that
+      // connect to x's final to y's init if both the trailing operation of x
+      // and the heading operation of y are not 'kleene closure'.
         
       y.states.forEach(s => s.id -= 1);  // reduce the id of all y's state by 1
 
       y.edges.filter(e => e.from === y.init).forEach(e => e.from = x.final);
       y.edges.filter(e => e.to === y.init).forEach(e => e.to = x.final);
 
-      // Exclude y's initial state
-      states = x.states.concat(y.states.filter(s => s !== y.init));
-      edges = x.edges.concat(y.edges);  // add all the edges of x and y
+      y.states = y.states.filter(s => s !== y.init);
+
+      final = (y.init === y.final)? x.final : y.final;
+
+      states = [...x.states, ...y.states];
+      edges = [...x.edges, ...y.edges];  // add all the edges of x and y
     } else {
-      states = x.states.concat(y.states);  // add all the states of x and y
+      states = [...x.states, ...y.states];  // add all the states of x and y
       edges = [
         {
           name: 'λ',
           from: x.final,
           to: y.init,
-        }
-      ].concat(x.edges).concat(y.edges);
+        },
+        ...x.edges,
+        ...y.edges
+      ];
+
+      final = y.final;
    }
 
     let nfa = {
       init: x.init,
-      final: y.final,
-      states: states,
+      final: final,
       edges: edges,
+      states: states,
+      maxId: maxId,
       last: 'concat',
       heading: x.heading,
       trailing: y.trailing
     };
     stack.push(nfa);
   },
-  kleene: (stack) => {
+  kleene: (stack, optimize) => {
     if (stack.length < 1) {
       throw {
         type: 'Stack Underflow',
@@ -449,25 +466,32 @@ const execute = {
 
     let x = stack.pop();
 
-    if (x.last === 'lambda') {
-      stack.push(x);  // λ* has no effect
+    if (x.last === 'lambda' || x.last === 'kleene') {
+      stack.push(x);  // λ* and (r*)* has no effect
       return;
     }
 
-    /* Optimized
-    x.edges.filter(e => e.from == x.final).map(e => e.from = x.init);
-    x.edges.filter(e => e.to == x.final).map(e => e.to = x.init);
+    let maxId = x.maxId;
+    let final;
+    let edges = [], states = [];
 
-    let states = x.states.filter(s => s != x.final);
-    */
+    if (optimize) {
+      // We can simplify the kleene closure by connecting the final state of x
+      // to its initial state.
 
-    let states = x.states;
+      // Find all edges that connect from/to the final of x, redirect them to
+      // the init of x.
+      x.edges.filter(e => e.from == x.final).forEach(e => e.from = x.init);
+      x.edges.filter(e => e.to == x.final).forEach(e => e.to = x.init);
+      edges = x.edges;
 
-    let nfa = {
-      init: x.init,
-      final: x.final,
-      states: states,
-      edges: [
+      // Exclude the final state from x
+      states = x.states.filter(s => s != x.final);
+      final = x.init;
+      maxId -= 1;
+    } else {
+      // Add the forward and back lambda transitions.
+      edges = [
         {
           name: 'λ',
           from: x.init,
@@ -479,8 +503,19 @@ const execute = {
           from: x.final,
           to: x.init,
           dot: { constraint: 'false' }
-        }
-      ].concat(x.edges),
+        },
+        ...x.edges
+      ];
+      states = x.states;  // states unchanged
+      final = x.final;
+    }
+
+    let nfa = {
+      init: x.init,
+      final: final,
+      edges: edges,
+      states: states,
+      maxId: maxId,
       last: 'kleene',
       heading: 'kleene',
       trailing: 'kleene'
@@ -491,6 +526,7 @@ const execute = {
 
 const buildNfaStateMachine = function(nfa) {
   let transitions = [];
+  let final = [];
   for (edge of nfa.edges) {
     transitions.push({
       name: edge.name,
@@ -500,38 +536,109 @@ const buildNfaStateMachine = function(nfa) {
     })
   }
 
+  for (state of nfa.final) {
+    final.push(`q${state.id}`);
+  }
+
   return new StateMachine({
     init: `q${nfa.init.id}`,
     transitions: transitions,
     data: {
-      final: `q${nfa.final.id}`
+      init: `q${nfa.init.id}`, 
+      final: final
     }
   });
 }
 
-const generateNfa = function(code) {
+const generateNfa = function(code, optimize) {
   let stack = [];
   for (ins of code) {
-    execute[ins.op](stack);
+    execute[ins.op](stack, optimize);
   }
 
   let nfa = stack[0];
-  if (nfa.last === 'lambda') {
-    // nfa is just (q0) --λ--> (q1), so simplify to -->((q0))
-    nfa.states = [nfa.init];
-    nfa.edges = [];
-    nfa.final = nfa.init;
+  console.log('fresh nfa:', util.inspect(nfa, {showHidden: false, depth: null, colors: true}), '\n');
+
+  for (state of nfa.states) {
+    nfa.edges.forEach(e => {
+      if (e.from.id === state.id) {
+        console.log(state, e, e.from === state);
+      }
+      if (e.to.id === state.id) {
+        console.log(state, e, e.to === state);
+      }
+    })
   }
 
+  let essential = [];
+
+  if (optimize) {
+    let workList = [nfa.final];
+
+    do {
+      let qf = workList.shift();
+
+      let edgesToQf = nfa.edges.filter(e => e.to === qf);
+      let edgesFromQf = nfa.edges.filter(e => e.from === qf);
+
+      if (edgesToQf.length > 0 && edgesFromQf.length == 0 &&
+          edgesToQf.every(e => e.name === 'λ' && e.to !== e.from)) {
+        // If every edges to qf are lambda and does not make a look then qf is
+        // said to be 'redundent' and can be removed.
+        for (edge of edgesToQf) {
+          // All the states that are the edges's 'to' need to be checked again.
+          if (!workList.includes(edge.from)) {
+            workList.push(edge.from);  // avoid 
+          }
+
+          // The edge can safely be removed.
+          nfa.edges = nfa.edges.filter(e => e !== edge);
+        }
+
+        // qf can safely be removed.
+        nfa.states = nfa.states.filter(s => s !== qf);
+      } else {
+        // qf is an essential final state
+        if (!essential.includes(qf)) {
+          essential.push(qf);
+        }
+      }
+    } while (workList.length > 0);
+    nfa.final = essential;  // allow multiple final states
+
+    // Remove (q) --λ--> (q)
+    nfa.edges = nfa.edges.filter(e => (e.name !== 'λ') || (e.to !== e.from));
+
+    // Remove repeadted edges
+    /*
+    for (let i = 0; i < nfa.edges.length; ++i) {
+      let e = nfa.edges[i];
+      for (let j = i + 1; j < nfa.edges.length; ++j) {
+        let f = nfa.edges[j];
+        if (e.name === f.name &&
+            e.to === f.to &&
+            e.from == f.from) {
+          nfa.edges.splice(j--, 1);
+        }
+      }
+    }
+    */
+  } else {
+    nfa.final = [nfa.final];
+  }
+
+  //console.log('The nfa after opt:', util.inspect(nfa, {showHidden: false, depth: null, colors: true}));
   return nfa;
 }
 
 const getDotScript = function(fsm) {
   let lines = visualize(fsm, { orientation: 'horizontal' }).split('\n');
   lines.splice(2, 0, `  "" [shape = none, width = 0.0]`);
-  lines.splice(2, 0, `  "" -> "q0";`);
+  lines.splice(2, 0, `  "" -> ${fsm.init};`);
   lines.splice(2, 0, `  node [shape = circle, width = 1.0];`);
-  lines.splice(2, 0, `  node [shape = doublecircle]; ${fsm.final};`);
+  for (state of fsm.final) {
+    lines.splice(2, 0, `  node [shape = doublecircle, width = 0.9]; ${state};`);
+  }
   return lines.join('\n');
 }
 
@@ -552,7 +659,7 @@ const getErrorMessage = function(error) {
   }
 }
 
-const compile = function(reString) {
+const compile = function(reString, optimize = false) {
   // Set the global variable: inputReString.
   inputReString = reString;
 
@@ -563,7 +670,7 @@ const compile = function(reString) {
   // cfsm. Get the generated code of parsing result.
   let code = parserDriver(tokenStream);
 
-  let nfa = generateNfa(code);
+  let nfa = generateNfa(code, optimize);
   let fsm = buildNfaStateMachine(nfa);
   return fsm;
 }
