@@ -278,7 +278,7 @@ const execute = {
 
     // Look up the previous one's final state
     let tos = stack[stack.length - 1];
-    let nextId = (tos)? tos.maxId + 1 : 0;
+    let nextId = (tos)? tos.stateCount : 0;
 
     let init = { id: nextId };
     let final = { id: nextId + 1 };
@@ -301,10 +301,10 @@ const execute = {
           to: final,
         }
       ],
-      maxId: final.id,
       last: op,
       heading: op,
-      trailing: op
+      trailing: op,
+      stateCount: nextId + 2  // 2 states are added
     }
     stack.push(nfa);
   },
@@ -325,16 +325,11 @@ const execute = {
       return;
     }
 
-    x.states.forEach(s => s.id += 1);  // increase the id of all x's state by one
-    y.states.forEach(s => s.id += 1);  // increase the id of all y's state by one
-
-
-    /* Optimized
-    y.states.map(s => s.id -= 2);
-    */
+    x.states.forEach(s => s.id += 1);  // increase the id of all x's state by 1
+    y.states.forEach(s => s.id += 1);  // increase the id of all y's state by 1
 
     let init = { id: x.init.id - 1 };
-    let final = { id: y.maxId + 2 };
+    let final = { id: y.stateCount + 1 };
 
     let edges = [
       {
@@ -357,30 +352,19 @@ const execute = {
         from: y.final,
         to: final,
       },
-      ...x.edges,
-      ...y.edges
+      ...x.edges, ...y.edges
     ];
     let states = [init, final, ...x.states, ...y.states];
     
-    // Optimized
-    /*
-    x.edges.filter(e => e.from === x.final).map(e => e.from = y.final);
-    x.edges.filter(e => e.to === x.final).map(e => e.to = y.final);
-    y.edges.filter(e => e.from === y.init).map(e => e.from = x.init);
-    y.edges.filter(e => e.to === y.init).map(e => e.to = x.init);
-    let edges = x.edges.concat(y.edges);
-    let states = x.states.filter(s => s !== x.final).concat(y.states.filter(s => s !== y.init));
-    */
-
     let nfa = {
       init: init,
       final: final,
       states: states,
       edges: edges,
-      maxId: final.id,
       last: 'union',
       heading: 'union',
-      trailing: 'union'
+      trailing: 'union',
+      stateCount: y.stateCount + 2  // 2 states are added
     }
     stack.push(nfa);
   },
@@ -409,7 +393,7 @@ const execute = {
     }
 
     let final;
-    let maxId = y.maxId;
+    let stateCount = y.stateCount;
     let edges = [];
     let states = [];
 
@@ -422,37 +406,37 @@ const execute = {
 
       y.edges.filter(e => e.from === y.init).forEach(e => e.from = x.final);
       y.edges.filter(e => e.to === y.init).forEach(e => e.to = x.final);
-
-      y.states = y.states.filter(s => s !== y.init);
-
-      final = (y.init === y.final)? x.final : y.final;
-
-      states = [...x.states, ...y.states];
       edges = [...x.edges, ...y.edges];  // add all the edges of x and y
+
+      // Exclude initial state of y.
+      states = [...x.states, ...y.states.filter(s => s !== y.init)];
+      stateCount -= 1;  // y.init has been removed
+
+      // Consider that y's init is the same as final.
+      final = (y.init === y.final)? x.final : y.final;
     } else {
-      states = [...x.states, ...y.states];  // add all the states of x and y
+      // Simply add a lambda transition from x.final to y.init
       edges = [
         {
           name: 'λ',
           from: x.final,
           to: y.init,
         },
-        ...x.edges,
-        ...y.edges
+        ...x.edges, ...y.edges
       ];
-
+      states = [...x.states, ...y.states];  // add all the states of x and y
       final = y.final;
-   }
+    }
 
     let nfa = {
       init: x.init,
       final: final,
       edges: edges,
       states: states,
-      maxId: maxId,
       last: 'concat',
       heading: x.heading,
-      trailing: y.trailing
+      trailing: y.trailing,
+      stateCount: stateCount
     };
     stack.push(nfa);
   },
@@ -471,7 +455,7 @@ const execute = {
       return;
     }
 
-    let maxId = x.maxId;
+    let stateCount = x.stateCount;
     let final;
     let edges = [], states = [];
 
@@ -488,7 +472,7 @@ const execute = {
       // Exclude the final state from x
       states = x.states.filter(s => s != x.final);
       final = x.init;
-      maxId -= 1;
+      stateCount -= 1;  // x.final has been removed
     } else {
       // Add the forward and back lambda transitions.
       edges = [
@@ -515,10 +499,10 @@ const execute = {
       final: final,
       edges: edges,
       states: states,
-      maxId: maxId,
       last: 'kleene',
       heading: 'kleene',
-      trailing: 'kleene'
+      trailing: 'kleene',
+      stateCount: stateCount
     }
     stack.push(nfa);
   }
@@ -552,27 +536,14 @@ const buildNfaStateMachine = function(nfa) {
 
 const generateNfa = function(code, optimize) {
   let stack = [];
+
   for (ins of code) {
     execute[ins.op](stack, optimize);
   }
-
   let nfa = stack[0];
-  console.log('fresh nfa:', util.inspect(nfa, {showHidden: false, depth: null, colors: true}), '\n');
-
-  for (state of nfa.states) {
-    nfa.edges.forEach(e => {
-      if (e.from.id === state.id) {
-        console.log(state, e, e.from === state);
-      }
-      if (e.to.id === state.id) {
-        console.log(state, e, e.to === state);
-      }
-    })
-  }
-
-  let essential = [];
 
   if (optimize) {
+    let essential = [];
     let workList = [nfa.final];
 
     do {
@@ -583,12 +554,13 @@ const generateNfa = function(code, optimize) {
 
       if (edgesToQf.length > 0 && edgesFromQf.length == 0 &&
           edgesToQf.every(e => e.name === 'λ' && e.to !== e.from)) {
-        // If every edges to qf are lambda and does not make a look then qf is
-        // said to be 'redundent' and can be removed.
+        // If every edges to qf are lambda and does not make a loop, then qf is
+        // said to be 'redundent' and can be removed. Plus, there are no
+        // transitions from qf.
         for (edge of edgesToQf) {
-          // All the states that are the edges's 'to' need to be checked again.
+          // All the states that can transition to qf need to be checked again.
           if (!workList.includes(edge.from)) {
-            workList.push(edge.from);  // avoid 
+            workList.push(edge.from);  // avoid repeated states
           }
 
           // The edge can safely be removed.
@@ -597,11 +569,8 @@ const generateNfa = function(code, optimize) {
 
         // qf can safely be removed.
         nfa.states = nfa.states.filter(s => s !== qf);
-      } else {
-        // qf is an essential final state
-        if (!essential.includes(qf)) {
-          essential.push(qf);
-        }
+      } else if (!essential.includes(qf)) {
+        essential.push(qf);  // qf is an essential final state
       }
     } while (workList.length > 0);
     nfa.final = essential;  // allow multiple final states
@@ -610,7 +579,6 @@ const generateNfa = function(code, optimize) {
     nfa.edges = nfa.edges.filter(e => (e.name !== 'λ') || (e.to !== e.from));
 
     // Remove repeadted edges
-    /*
     for (let i = 0; i < nfa.edges.length; ++i) {
       let e = nfa.edges[i];
       for (let j = i + 1; j < nfa.edges.length; ++j) {
@@ -622,9 +590,8 @@ const generateNfa = function(code, optimize) {
         }
       }
     }
-    */
   } else {
-    nfa.final = [nfa.final];
+    nfa.final = [nfa.final];  // transform to an array for consistency
   }
 
   //console.log('The nfa after opt:', util.inspect(nfa, {showHidden: false, depth: null, colors: true}));

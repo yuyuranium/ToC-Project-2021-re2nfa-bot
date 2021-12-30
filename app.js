@@ -2,7 +2,6 @@ const express = require('express');
 const dotenv = require('dotenv');
 const linebot = require('linebot');
 const reParser = require('./util/re-parser');
-const visualize = require('javascript-state-machine/lib/visualize');
 const { CliRenderer } = require('@diagrams-ts/graphviz-cli-renderer');
 const axios = require('axios')
 const fs = require('fs');
