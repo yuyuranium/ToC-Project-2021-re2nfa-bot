@@ -672,7 +672,6 @@ const generateNfa = function(code, optimize) {
       }
     }
 
-    // @todo optimize () --λ--> (())
   } else {
     nfa.final = [nfa.final];  // transform to an array for consistency
   }
