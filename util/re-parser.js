@@ -308,7 +308,7 @@ const execute = {
     }
     stack.push(nfa);
   },
-  union: (stack) => {
+  union: (stack, optimize) => {
     // Do the union operation on the 2 nfa on the stack top.
     if (stack.length < 2) {
       throw {
@@ -320,41 +320,122 @@ const execute = {
     let y = stack.pop();
     let x = stack.pop();
 
-    if (x.last === 'lambda' && y.last === 'lambda') {
-      stack.push(x);  // λ+λ is just λ
-      return;
+    if (optimize) {
+      if (x.last === 'kleene' && y.last === 'lambda') {
+        stack.push(x);  // (r)*+λ is just (r)*
+        return;
+      } else if (x.last === 'lambda' && y.last === 'kleene') {
+        y.states.forEach(s => s.id -= 2);  // 2 states ahead are to be removed
+        stack.push(y);  // λ+(r)* is just (r)*
+        return;
+      } else if (x.last === 'lambda' && y.last === 'lambda') {
+        stack.push(x);  // λ+λ is just λ
+        return;
+      }
     }
 
-    x.states.forEach(s => s.id += 1);  // increase the id of all x's state by 1
-    y.states.forEach(s => s.id += 1);  // increase the id of all y's state by 1
+    x.states.forEach(s => s.id += 1);
+    y.states.forEach(s => s.id += 1);
 
     let init = { id: x.init.id - 1 };
     let final = { id: y.stateCount + 1 };
 
-    let edges = [
-      {
-        name: 'λ',
-        from: init,
-        to: x.init,
-      },
-      {
-        name: 'λ',
-        from: init,
-        to: y.init,
-      },
-      {
-        name: 'λ',
-        from: x.final,
-        to: final,
-      },
-      {
-        name: 'λ',
-        from: y.final,
-        to: final,
-      },
-      ...x.edges, ...y.edges
-    ];
-    let states = [init, final, ...x.states, ...y.states];
+    let edges = [];
+    let states = [];
+    let stateCount = y.stateCount + 2;
+
+    if (optimize) {
+      if (x.heading != 'kleene') {
+        // We can remove x.init.
+        x.states.forEach(s => s.id -= 1);
+        y.states.forEach(s => s.id -= 1);
+        x.edges.filter(e => e.to === x.init).forEach(e => e.to = init);
+        x.edges.filter(e => e.from === x.init).forEach(e => e.from = init);
+        x.states = x.states.filter(s => s !== x.init);
+        stateCount -= 1;
+        final.id -= 1;
+      } else {
+        edges.push({
+          name: 'λ',
+          from: init,
+          to: x.init
+        });
+      }
+
+      if (x.trailing != 'kleene') {
+        // We can remove x.final.
+        y.states.forEach(s => s.id -= 1);
+        x.edges.filter(e => e.to === x.final).forEach(e => e.to = final);
+        x.edges.filter(e => e.from === x.final).forEach(e => e.from = final);
+        x.states = x.states.filter(s => s !== x.final);
+        stateCount -= 1;
+        final.id -= 1;
+      } else {
+        edges.push({
+          name: 'λ',
+          from: x.final,
+          to: final
+        });
+      }
+
+      if (y.heading != 'kleene') {
+        // we can remove y.init.
+        y.states.forEach(s => s.id -= 1);
+        y.edges.filter(e => e.to === y.init).forEach(e => e.to = init);
+        y.edges.filter(e => e.from === y.init).forEach(e => e.from = init);
+        y.states = y.states.filter(s => s !== y.init);
+        stateCount -= 1;
+        final.id -= 1;
+      } else {
+        edges.push({
+          name: 'λ',
+          from: init,
+          to: y.init
+        });
+      }
+
+      if (y.trailing != 'kleene') {
+        // we can remove y.final.
+        y.edges.filter(e => e.to === y.final).forEach(e => e.to = final);
+        y.edges.filter(e => e.from === y.final).forEach(e => e.from = final);
+        y.states = y.states.filter(s => s !== y.final);
+        stateCount -= 1;
+        final.id -= 1;
+      } else {
+        edges.push({
+          name: 'λ',
+          from: y.final,
+          to: final
+        });
+      }
+
+    } else {
+      edges = [
+        {
+          name: 'λ',
+          from: init,
+          to: x.init
+        },
+        {
+          name: 'λ',
+          from: init,
+          to: y.init
+        },
+        {
+          name: 'λ',
+          from: x.final,
+          to: final
+        },
+        {
+          name: 'λ',
+          from: y.final,
+          to: final
+        }
+      ];
+    }
+
+    edges = [...edges, ...x.edges, ...y.edges];
+    states = [init, final, ...x.states, ...y.states];
     
     let nfa = {
       init: init,
@@ -364,7 +445,7 @@ const execute = {
       last: 'union',
       heading: 'union',
       trailing: 'union',
-      stateCount: y.stateCount + 2  // 2 states are added
+      stateCount: stateCount
     }
     stack.push(nfa);
   },
@@ -450,7 +531,7 @@ const execute = {
 
     let x = stack.pop();
 
-    if (x.last === 'lambda' || x.last === 'kleene') {
+    if (optimize && (x.last === 'lambda' || x.last === 'kleene')) {
       stack.push(x);  // λ* and (r*)* has no effect
       return;
     }
@@ -590,11 +671,13 @@ const generateNfa = function(code, optimize) {
         }
       }
     }
+
+    // @todo optimize () --λ--> (())
   } else {
     nfa.final = [nfa.final];  // transform to an array for consistency
   }
 
-  //console.log('The nfa after opt:', util.inspect(nfa, {showHidden: false, depth: null, colors: true}));
+  console.log('The nfa after opt:', util.inspect(nfa, {showHidden: false, depth: null, colors: true}));
   return nfa;
 }
 
