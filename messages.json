@@ -108,8 +108,8 @@
     }
   },
   "hint": "💡 (use '^' to represent λ)",
-  "askForReInput": "✍ Please input an RE ",
-  "askForReInputAgain": "✍ Please try another RE",
+  "askForReInput": "✏ Please input an RE ",
+  "askForReInputAgain": "✏ Please try another RE",
   "askForStringToMatch": "👀 Please input a string to match",
   "didNotGetIt": [
     "What did you just say?",
