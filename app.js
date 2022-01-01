@@ -32,7 +32,7 @@ const upload2Imgur = async function(filename) {
   }
 }
 
-Array.prototype.random = function () {
+Array.prototype.random = function() {
   return this[Math.floor((Math.random() * this.length))];
 }
 
@@ -127,8 +127,7 @@ bot.on('postback', async (event) => {
           },
           messages.mainMenu
         ]);
-        data.action = 'restart';  // modify the action
-        break;
+        return;
     }
 
     user.fsm[data.action]();  // do the transition
@@ -163,7 +162,10 @@ bot.on('postback', async (event) => {
           },
           messages.mainMenu
         ]);
+        activeUsers = activeUsers.filter(u => u.id !== user.id);
+        return;
       default:
+        return;  // do nothing
     }
     user.fsm[data.action]();  // do the transition
   }
@@ -237,11 +239,10 @@ bot.on('message', async (event) => {
       // User said yes.
       try {
         // Try compiling the RE.
-        let fsm = reCompiler.compile(user.input, optimize=user.opt);
+        let nfa = reCompiler.compile(user.input, optimize=user.opt);
 
-        // Once success, get the dot script for plotting.
-        let dotScript = reCompiler.getDotScript(fsm);
-        await render(dotScript);
+        // Once success, get the dot script from nfa for plotting.
+        await render(nfa.getDotScript());
 
         // Wait for uploading the image to imgur.
         let res = await upload2Imgur(OUTPUT_FILE);
@@ -282,6 +283,15 @@ bot.on('message', async (event) => {
 });
 
 app.post('/', bot.parser());
+app.get('/active_users', (_req, res) => {
+  res.send(activeUsers.map(u => {
+    return {
+      id: u.id,
+      state: u.fsm.state,
+      opt: u.opt
+    };
+  }));
+});
 
 app.listen(PORT);
 console.log(`Listening on port ${PORT}`);
