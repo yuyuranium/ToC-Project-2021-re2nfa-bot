@@ -1,9 +1,9 @@
 {
   "greeting": [
-    "Hi👋",
-    "Hello😇"
+    "Hi 👋",
+    "Hello 😇"
   ],
-  "whoami": "it's ToC-RE-Helper by yuyu😄!",
+  "whoami": "it's ToC-RE-Helper by yuyu! 😄",
   "intro": "I'm here to help you understand regular expression better for Theory of Computation📖!\n\n📝Source code:\nhttps://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot",
   "tryFollowing": "Try one of the following👇",
   "selectFollowing": "Please select one of the following👇",
@@ -46,6 +46,26 @@
       ]
     }
   },
+  "confirmReInputTemplate": {
+    "type": "template",
+    "altText": "Please confirm your input",
+    "template": {
+        "type": "confirm",
+        "text": "Is this correct? 😀",
+        "actions": [
+            {
+              "type": "message",
+              "label": "✅",
+              "text": "yes"
+            },
+            {
+              "type": "message",
+              "label": "❌",
+              "text": "no"
+            }
+        ]
+    }
+  },
   "onNfaGeneratedMenu": {
     "type": "template",
     "altText": "Please proceed to the next step",
@@ -56,10 +76,10 @@
       "imageSize": "cover",
       "imageBackgroundColor": "#ffffff",
       "title": "Next step",
-      "text": "NFA generated! Please select the next step",
+      "text": "NFA generated! Please select the next step.",
       "defaultAction": {
         "type": "postback",
-        "label": "Try another re ✍ ",
+        "label": "Try another RE ✍ ",
         "data": "action=retry"
       },
       "actions": [
@@ -81,14 +101,15 @@
       ]
     }
   },
-  "askForReInput": [
-    "✏ Please input an RE ",
-    "💡 (use '^' to represent λ)"
-  ],
-  "askForReInputAgain": [
-    "✏ Please try another RE "
-  ],
-  "notTextMessage": [
+  "hint": "💡 (use '^' to represent λ)",
+  "askForReInput": "✏ Please input an RE ",
+  "askForReInputAgain": "✏ Please try another RE",
+  "askForStringToMatch": "✏ Please input a string to match",
+  "didNotGetIt": [
+    "What did you just say?",
+    "Excuse me?",
+    "I'm sorry?",
+    "Pardon?"
   ],
   "onNfaGenerated": [
     "That's cool😆",
