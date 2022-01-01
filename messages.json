@@ -1,0 +1,104 @@
+{
+  "greeting": [
+    "Hi👋",
+    "Hello😇"
+  ],
+  "whoami": "it's ToC-RE-Helper by yuyu😄!",
+  "intro": "I'm here to help you understand regular expression better for Theory of Computation📖!\n\n📝Source code:\nhttps://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot",
+  "tryFollowing": "Try one of the following👇",
+  "selectFollowing": "Please select one of the following👇",
+  "mainMenu": {
+    "type": "template",
+    "altText": "Please select one of the following options",
+    "template": {
+      "type": "carousel",
+      "columns": [
+          {
+          "thumbnailImageUrl": "https://1.bp.blogspot.com/-c72v2XlVX3c/X2AOM--2XjI/AAAAAAA2axE/0e4r1fSVq-AVj7z9k4zagFEZXmkpTJtWACLcBGAsYHQ/s366/AF0007615_13.gif",
+          "title": "RE to NFA",
+          "text": "The straight forward way of converting RE to NFA.",
+          "actions": [{
+            "type": "postback",
+            "label": "Select! 👈",
+            "data": "action=re2nfa&opt=false"
+          }]
+        },
+        {
+          "thumbnailImageUrl": "https://1.bp.blogspot.com/-SWUKJEvBEcw/X2AOMKnGgWI/AAAAAAA2aw8/Kx7EqE0iXoM93NrsDAPyeMVZpl_cf_bewCLcBGAsYHQ/s368/AF0007615_11.gif",
+          "title": "RE to NFA (optimized)",
+          "text": "Constructing an optimized NFA with minimal states and edges.",
+          "actions": [{
+            "type": "postback",
+            "label": "Select! 🚀",
+            "data": "action=re2nfa&opt=true"
+          }]
+        },
+        {
+          "thumbnailImageUrl": "https://i.pinimg.com/originals/87/92/ec/8792ec6ccb5a65342afe98ecbe8b9b1d.gif",
+          "title": "Help",
+          "text": "Don't know what to do?",
+          "actions": [{
+            "type": "postback",
+            "label": "What is an RE? 🤯",
+            "data": "action=help"
+          }]
+        }
+      ]
+    }
+  },
+  "onNfaGeneratedMenu": {
+    "type": "template",
+    "altText": "Please proceed to the next step",
+    "template": {
+      "type": "buttons",
+      "thumbnailImageUrl": "https://1.bp.blogspot.com/-9ujZcLf7O_c/X2AONDO4kRI/AAAAAAA2axI/PO5SsNV_Bks37_uGMTSqlTn4lxOp9hXQACLcBGAsYHQ/s310/AF0007615_14.gif",
+      "imageAspectRatio": "rectangle",
+      "imageSize": "cover",
+      "imageBackgroundColor": "#ffffff",
+      "title": "Next step",
+      "text": "NFA generated! Please select the next step",
+      "defaultAction": {
+        "type": "postback",
+        "label": "Try another re ✍ ",
+        "data": "action=retry"
+      },
+      "actions": [
+        {
+          "type": "postback",
+          "label": "Match 👀",
+          "data": "action=match"
+        },
+        {
+          "type": "postback",
+          "label": "Try another RE ✍ ",
+          "data": "action=retry"
+        },
+        {
+          "type": "postback",
+          "label": "Restart ⏮ ",
+          "data": "action=restart"
+        }
+      ]
+    }
+  },
+  "askForReInput": [
+    "✏ Please input an RE ",
+    "💡 (use '^' to represent λ)"
+  ],
+  "askForReInputAgain": [
+    "✏ Please try another RE "
+  ],
+  "notTextMessage": [
+  ],
+  "onNfaGenerated": [
+    "That's cool😆",
+    "Here you are🤗",
+    "There you go😛"
+  ],
+  "onInputMatch": [
+    "It can be accept by the NFA"
+  ],
+  "onInputNotMatch": [
+    "It cannot be accept by the NFA"
+  ]
+}
