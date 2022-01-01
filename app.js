@@ -246,20 +246,18 @@ bot.on('message', async (event) => {
 
         // Wait for uploading the image to imgur.
         let res = await upload2Imgur(OUTPUT_FILE);
+        let menu = messages.onNfaGeneratedMenu;
+        menu.template.thumbnailImageUrl = res.data.link;
         event.reply([
           {
             type: 'text',
             text: `${messages.onNfaGenerated.random()}`
           },
-          {
-            type: 'image',
-            originalContentUrl: res.data.link,
-            previewImageUrl: res.data.link
-          },
-          messages.onNfaGeneratedMenu
+          menu
         ]);
 
         user.nfa = nfa;  // add nfa to user's field
+        user.nfaUrl = res.data.link;  // add link of the diagram of the nfa also
 
         // The user can proceed to the next state.
         user.fsm.correctReInput();
@@ -276,10 +274,27 @@ bot.on('message', async (event) => {
         user.fsm.incorrectReInput();
       }
       break;
+    case 'gotNfa':
+      if (input === 'get me the diagram') {
+        event.reply([
+          {
+            type: 'text',
+            text: `${messages.onGetNfaDiagram.random()}`
+          },
+          {
+            type: 'image',
+            originalContentUrl: user.nfaUrl,
+            previewImageUrl: user.nfaUrl
+          },
+        ]);
+      }
+      break;
     case 'waitingStringToMatch':
+      let menu = messages.onNfaGeneratedMenu;
+      menu.template.thumbnailImageUrl = user.nfaUrl;
       event.reply([
         user.nfa.match(input)? messages.onInputMatch : messages.onInputNotMatch,
-        messages.onNfaGeneratedMenu
+        menu
       ]);
       user.fsm.stringToMatch();
       break;

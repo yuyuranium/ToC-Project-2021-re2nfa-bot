@@ -12,9 +12,10 @@
     "altText": "Please select one of the following options",
     "template": {
       "type": "carousel",
+      "imageSize": "contain",
       "columns": [
           {
-          "thumbnailImageUrl": "https://1.bp.blogspot.com/-c72v2XlVX3c/X2AOM--2XjI/AAAAAAA2axE/0e4r1fSVq-AVj7z9k4zagFEZXmkpTJtWACLcBGAsYHQ/s366/AF0007615_13.gif",
+          "thumbnailImageUrl": "https://i.imgur.com/agdI5Bh.png",
           "title": "RE to NFA",
           "text": "The straight forward way of converting RE to NFA.",
           "actions": [{
@@ -24,7 +25,7 @@
           }]
         },
         {
-          "thumbnailImageUrl": "https://1.bp.blogspot.com/-SWUKJEvBEcw/X2AOMKnGgWI/AAAAAAA2aw8/Kx7EqE0iXoM93NrsDAPyeMVZpl_cf_bewCLcBGAsYHQ/s368/AF0007615_11.gif",
+          "thumbnailImageUrl": "https://i.imgur.com/nGGaBUG.png",
           "title": "RE to NFA (optimized)",
           "text": "Constructing an optimized NFA with minimal states and edges.",
           "actions": [{
@@ -73,16 +74,21 @@
       "type": "buttons",
       "thumbnailImageUrl": "https://1.bp.blogspot.com/-9ujZcLf7O_c/X2AONDO4kRI/AAAAAAA2axI/PO5SsNV_Bks37_uGMTSqlTn4lxOp9hXQACLcBGAsYHQ/s310/AF0007615_14.gif",
       "imageAspectRatio": "rectangle",
-      "imageSize": "cover",
+      "imageSize": "contain",
       "imageBackgroundColor": "#ffffff",
       "title": "Next step",
       "text": "NFA generated! Please select the next step.",
       "defaultAction": {
         "type": "postback",
-        "label": "Try another RE ✍ ",
-        "data": "action=retry"
+        "label": "Match 👀",
+        "data": "action=match"
       },
       "actions": [
+        {
+          "type": "message",
+          "label": "Get NFA diagram 🗒",
+          "text": "get me the diagram"
+        },
         {
           "type": "postback",
           "label": "Match 👀",
@@ -102,9 +108,9 @@
     }
   },
   "hint": "💡 (use '^' to represent λ)",
-  "askForReInput": "✏ Please input an RE ",
-  "askForReInputAgain": "✏ Please try another RE",
-  "askForStringToMatch": "✏ Please input a string to match",
+  "askForReInput": "✍ Please input an RE ",
+  "askForReInputAgain": "✍ Please try another RE",
+  "askForStringToMatch": "👀 Please input a string to match",
   "didNotGetIt": [
     "What did you just say?",
     "Excuse me?",
@@ -112,7 +118,12 @@
     "Pardon?"
   ],
   "onNfaGenerated": [
-    "That's cool😆",
+    "Nice🤩",
+    "Done😉",
+    "That's cool😆"
+  ],
+  "onGetNfaDiagram": [
+    "Sure😆",
     "Here you are🤗",
     "There you go😛"
   ],
