@@ -116,10 +116,6 @@
     "Here you are🤗",
     "There you go😛"
   ],
-  "onInputMatch": [
-    "It can be accept by the NFA"
-  ],
-  "onInputNotMatch": [
-    "It cannot be accept by the NFA"
-  ]
+  "onInputMatch": "✅ It can be accept by the NFA",
+  "onInputNotMatch": "🚫 It cannot be accept by the NFA"
 }

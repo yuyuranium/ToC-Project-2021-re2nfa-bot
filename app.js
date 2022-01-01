@@ -151,7 +151,7 @@ bot.on('postback', async (event) => {
         event.reply('No help yet');
         break;
       case 'match':
-        event.reply(askForStringToMatch);
+        event.reply(messages.askForStringToMatch);
         break;
       case 'restart':
         // Remove the user from active user list and push main menu to him/her.
@@ -259,6 +259,8 @@ bot.on('message', async (event) => {
           messages.onNfaGeneratedMenu
         ]);
 
+        user.nfa = nfa;  // add nfa to user's field
+
         // The user can proceed to the next state.
         user.fsm.correctReInput();
       } catch (e) {
@@ -267,15 +269,19 @@ bot.on('message', async (event) => {
         let errorMessage = reCompiler.getErrorMessage(e);
 
         // Something went wrong, ask for RE input again
-        let reply = [
+        event.reply([
           (errorMessage)? errorMessage : e,
           `${messages.askForReInputAgain}${(user.opt)? ' 🚀' : ''}`
-        ]
-        event.reply(reply);
+        ]);
         user.fsm.incorrectReInput();
       }
       break;
     case 'waitingStringToMatch':
+      event.reply([
+        user.nfa.match(input)? messages.onInputMatch : messages.onInputNotMatch,
+        messages.onNfaGeneratedMenu
+      ]);
+      user.fsm.stringToMatch();
       break;
     default:
       break;
