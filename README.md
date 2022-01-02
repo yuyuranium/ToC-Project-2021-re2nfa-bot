@@ -94,3 +94,14 @@ Once the user clicks the button that triggers `re2nfa` or `help` transition, the
 ![](./img/re-parser-cfsm.png)
 
 The state machine is the core of [regular expression compiler](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/re-compiler.js). The parser is a implementation of **button-up** parser, which is capable of parse the input using a SLR(1) grammar. The [parser driver](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/0d7d45ae109dc13acd538a439ca38cbbe9c99a46/lib/re-compiler.js#L181) is driven by the parse table derived by the CFSM and performs **shift-reduce** parsing on the input token string. For more detailed information, please refer to [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/README.md).
+
+## Deployment
+
+### Framework
+
+<img src="http://lms.tzuchi.com.tw/epaper/userfiles/image/42/chen_02.png" style="zoom:50%; align:left;" />
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png" style="zoom:20%; align:left;" />
+
+The framework of this bot is based on [Node.js](https://nodejs.org/en/) and[npm](https://www.npmjs.com/) is used as the package manager.
+
