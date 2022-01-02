@@ -99,9 +99,18 @@ The state machine is the core of [regular expression compiler](https://github.co
 
 ### Framework
 
-<img src="http://lms.tzuchi.com.tw/epaper/userfiles/image/42/chen_02.png" style="zoom:50%; align:left;" />
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Node.js_logo.svg/1200px-Node.js_logo.svg.png" style="width:20%; align:left;" />
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png" style="zoom:20%; align:left;" />
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png" style="width:20%; align:left;" />
 
-The framework of this bot is based on [Node.js](https://nodejs.org/en/) and[npm](https://www.npmjs.com/) is used as the package manager.
+The framework of this bot is based on [Node.js](https://nodejs.org/en/) and [npm](https://www.npmjs.com/) is used as the package manager.
+
+### Dependencies
+
+The dependent packages are recorded in `packages.json`. To install them, do
+
+```bash
+$ npm install
+```
+
 
