@@ -8,6 +8,7 @@ const queryString = require('query-string');
 const StateMachine = require('javascript-state-machine');
 const reCompiler = require('./lib/re-compiler');
 const messages = require('./messages.json');
+const visualize = require('javascript-state-machine/lib/visualize');
 
 const PORT = 6459;
 const OUTPUT_FILE = '/tmp/output.png';
@@ -46,6 +47,7 @@ const ControlFsm = StateMachine.factory({
     { name: 'correctReInput', from: 'hasReInput', to: 'gotNfa' },
     { name: 'incorrectReInput', from: 'hasReInput', to: 'waitingReInput' },
     { name: 'match', from: 'gotNfa', to: 'waitingStringToMatch' },
+    { name: 'askForDiagram', from: 'gotNfa', to: 'gotNfa' },
     { name: 'retry', from: 'gotNfa', to: 'waitingReInput' },
     { name: 'restart', from: '*', to: 'initial' },
     { name: 'stringToMatch', from: 'waitingStringToMatch', to: 'gotNfa' },
@@ -114,7 +116,7 @@ bot.on('postback', async (event) => {
         event.reply(reply);
         break;
       case 'help':
-        event.reply('No help yet');
+        event.reply(messages.reExplained);
         break;
       default:
         // May be 'match', 'retry' or 'restart' but user is not active.
@@ -148,7 +150,7 @@ bot.on('postback', async (event) => {
         event.reply(reply);
         break;
       case 'help':
-        event.reply('No help yet');
+        event.reply(messages.reExplained);
         break;
       case 'match':
         event.reply(messages.askForStringToMatch);
@@ -287,6 +289,14 @@ bot.on('message', async (event) => {
             previewImageUrl: user.nfaUrl
           },
         ]);
+        user.fsm.askForDiagram();
+      } else {
+        let menu = messages.onNfaGeneratedMenu;
+        menu.template.thumbnailImageUrl = user.nfaUrl;
+        event.reply([
+          messages.didNotGetIt.random(),
+          menu
+        ]);
       }
       break;
     case 'waitingStringToMatch':
@@ -304,14 +314,22 @@ bot.on('message', async (event) => {
 });
 
 app.post('/', bot.parser());
+
 app.get('/active_users', (_req, res) => {
   res.send(activeUsers.map(u => {
     return {
       id: u.id,
       state: u.fsm.state,
-      opt: u.opt
+      opt: u.opt,
+      nfa: u.nfaUrl
     };
   }));
+});
+
+app.get('/ctrl_fsm', async (_req, res) => {
+  await render(visualize(new ControlFsm()));
+  let result = await upload2Imgur(OUTPUT_FILE);
+  res.send(`<script>location.replace('${result.data.link}')</script>`);
 });
 
 app.listen(PORT);

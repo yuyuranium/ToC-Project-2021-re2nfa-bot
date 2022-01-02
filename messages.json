@@ -67,6 +67,267 @@
         ]
     }
   },
+  "reExplained": {
+    "type": "flex",
+    "altText": "See RE help",
+    "contents": {
+      "type": "carousel",
+      "contents": [
+        {
+          "type": "bubble",
+          "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Primitive",
+                "size": "lg",
+                "weight": "bold"
+              }
+            ]
+          },
+          "hero": {
+            "type": "image",
+            "url": "https://i.imgur.com/kMPMKxr.png",
+            "size": "full",
+            "aspectRatio": "16:9",
+            "aspectMode": "fit"
+          },
+          "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Primitive is an atomic component of regular expressions.The above NFA shows",
+                "weight": "regular",
+                "style": "normal",
+                "gravity": "top",
+                "wrap": true,
+                "size": "md",
+                "contents": [],
+                "margin": "none",
+                "decoration": "none"
+              },
+              {
+                "type": "text",
+                "text": " L(M) = L(a) = {a}",
+                "size": "md",
+                "style": "italic",
+                "weight": "bold",
+                "align": "center",
+                "decoration": "none",
+                "margin": "md"
+              }
+            ]
+          }
+        },
+        {
+          "type": "bubble",
+          "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Union",
+                "size": "lg",
+                "weight": "bold",
+                "decoration": "none"
+              }
+            ]
+          },
+          "hero": {
+            "type": "image",
+            "url": "https://i.imgur.com/QuNTVoU.png",
+            "size": "full",
+            "aspectRatio": "16:9",
+            "aspectMode": "fit"
+          },
+          "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Union operation is written as R1+R2. Say L(R1+R2) = L(R1) U L(R2). The above NFA shows",
+                "weight": "regular",
+                "style": "normal",
+                "gravity": "top",
+                "wrap": true,
+                "size": "md",
+                "contents": [],
+                "margin": "none",
+                "decoration": "none"
+              },
+              {
+                "type": "text",
+                "text": " L(M) = L(a) U L(b) = {a} U {b}",
+                "size": "md",
+                "style": "italic",
+                "weight": "bold",
+                "align": "center",
+                "decoration": "none",
+                "margin": "md"
+              }
+            ]
+          }
+        },
+        {
+          "type": "bubble",
+          "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Concatenation",
+                "size": "lg",
+                "weight": "bold",
+                "decoration": "none"
+              }
+            ]
+          },
+          "hero": {
+            "type": "image",
+            "url": "https://i.imgur.com/19Nx0yo.png",
+            "size": "full",
+            "aspectRatio": "16:9",
+            "aspectMode": "fit"
+          },
+          "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Concatenation is written as R1∙R2, or simply R1R2. Say L(R1∙R2) = L(R1)L(R2). The above NFA shows",
+                "weight": "regular",
+                "style": "normal",
+                "gravity": "top",
+                "wrap": true,
+                "size": "md",
+                "contents": [],
+                "margin": "none",
+                "decoration": "none"
+              },
+              {
+                "type": "text",
+                "text": " L(M) = L(ab) = {ab}",
+                "size": "md",
+                "style": "italic",
+                "weight": "bold",
+                "align": "center",
+                "decoration": "none",
+                "margin": "md"
+              }
+            ]
+          }
+        },
+        {
+          "type": "bubble",
+          "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Kleene Closure",
+                "size": "lg",
+                "weight": "bold",
+                "decoration": "none"
+              }
+            ]
+          },
+          "hero": {
+            "type": "image",
+            "url": "https://i.imgur.com/sMuDCL1.png",
+            "size": "full",
+            "aspectRatio": "16:9",
+            "aspectMode": "fit"
+          },
+          "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "Kleene closure is denoted as R1*. Say L(R1*) = L(R1)*. The above NFA shows",
+                "weight": "regular",
+                "style": "normal",
+                "gravity": "top",
+                "wrap": true,
+                "size": "md",
+                "contents": [],
+                "margin": "none",
+                "decoration": "none"
+              },
+              {
+                "type": "text",
+                "text": " L(M) = L(a*) = {a}*",
+                "size": "md",
+                "style": "italic",
+                "weight": "bold",
+                "align": "center",
+                "decoration": "none",
+                "margin": "md"
+              }
+            ]
+          }
+        },
+        {
+          "type": "bubble",
+          "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "text": "That's all",
+                "size": "lg",
+                "weight": "bold",
+                "decoration": "none"
+              }
+            ]
+          },
+          "hero": {
+            "type": "image",
+            "url": "https://i.imgur.com/9gEEbNw.jpg",
+            "size": "full",
+            "aspectRatio": "16:9",
+            "aspectMode": "fit"
+          },
+          "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "button",
+                "action": {
+                  "type": "postback",
+                  "label": "Back to main menu",
+                  "data": "action=restart"
+                },
+                "style": "primary"
+              },
+              {
+                "type": "button",
+                "action": {
+                  "type": "uri",
+                  "label": "See more",
+                  "uri": "https://www.cs.rochester.edu/u/nelson/courses/csc_173/fa/re.html"
+                },
+                "style": "secondary"
+              }
+            ],
+            "position": "relative",
+            "spacing": "md"
+          }
+        }
+      ]
+    }
+  },
   "onNfaGeneratedMenu": {
     "type": "template",
     "altText": "Please proceed to the next step",
@@ -112,21 +373,23 @@
   "askForReInputAgain": "✏ Please try another RE",
   "askForStringToMatch": "👀 Please input a string to match",
   "didNotGetIt": [
-    "What did you just say?",
-    "Excuse me?",
-    "I'm sorry?",
-    "Pardon?"
+    "What did you just say? 😮",
+    "Excuse me? 😅",
+    "I'm sorry? 😰",
+    "Pardon? 😧"
   ],
   "onNfaGenerated": [
-    "Nice🤩",
-    "Done😉",
-    "That's cool😆"
+    "Nice! 🤩",
+    "Done! 😉",
+    "That's cool! 😆",
+    "Got it! 😙"
   ],
   "onGetNfaDiagram": [
-    "Sure😆",
-    "Here you are🤗",
-    "There you go😛"
+    "Sure! 😆",
+    "Here you are! 🤗",
+    "There you go! 😛",
+    "Why not? 😄"
   ],
-  "onInputMatch": "✅ It can be accept by the NFA",
-  "onInputNotMatch": "🚫 It cannot be accept by the NFA"
+  "onInputMatch": "✅ It can be accepted by the NFA",
+  "onInputNotMatch": "🚫 It cannot be accepted by the NFA"
 }
