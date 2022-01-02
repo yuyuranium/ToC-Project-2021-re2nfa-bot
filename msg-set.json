@@ -152,6 +152,7 @@
       }
     }
   },
+  "confirmPrefix": "💡 You entered:",
   "confirmReInputTemplate": {
     "type": "flex",
     "altText": "Please confirm your input",
@@ -541,5 +542,6 @@
   "onInputMatch": "✅ It can be accepted by the NFA",
   "onInputNotMatch": "🚫 It cannot be accepted by the NFA",
   "controlFsmDiagram": "https://imgur.com/LDHNryC.png",
-  "reParserCfsmDiagram": "https://imgur.com/q8KYTAM.png"
+  "reParserCfsmDiagram": "https://imgur.com/q8KYTAM.png",
+  "optSymbol": " 🚀"
 }

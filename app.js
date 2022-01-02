@@ -7,7 +7,7 @@ const fs = require('fs');
 const queryString = require('query-string');
 const StateMachine = require('javascript-state-machine');
 const reCompiler = require('./lib/re-compiler');
-const messages = require('./messages.json');
+const msgSet = require('./msg-set.json');
 const visualize = require('javascript-state-machine/lib/visualize');
 
 const PORT = 6459;
@@ -74,8 +74,8 @@ let activeUsers = [];
 bot.on('follow', async (event) => {
   let profile = await event.source.profile();
   let welcomeMessage =
-      `${messages.greeting[1]} ${profile.displayName}, ${messages.whoami}\n\n` + 
-      `${messages.intro}`;
+      `${msgSet.greeting[1]} ${profile.displayName}, ${msgSet.whoami}\n\n` + 
+      `${msgSet.intro}`;
   try {
     event.reply([
       {
@@ -84,9 +84,9 @@ bot.on('follow', async (event) => {
       },
       {
         type: 'text',
-        text: messages.tryFollowing
+        text: msgSet.tryFollowing
       },
-      messages.mainMenu
+      msgSet.mainMenu
     ]);
   } catch (e) {
     console.log(e);
@@ -114,12 +114,12 @@ bot.on('postback', async (event) => {
         user.opt = data.opt === 'true';  
 
         let reply =
-            `${messages.askForReInput}${(user.opt)? '🚀' : ''}\n` +
-            `${messages.hint}`;
+            `${msgSet.askForReInput}${(user.opt)? msgSet.optSymbol : ''}\n` +
+            `${msgSet.hint}`;
         event.reply(reply);
         break;
       case 'help':
-        event.reply(messages.helpMenu);
+        event.reply(msgSet.helpMenu);
         break;
       default:
         // May be 'match', 'retry' or 'restart' but user is not active.
@@ -127,10 +127,10 @@ bot.on('postback', async (event) => {
         event.reply([
           {
             type: 'text',
-            text: `${messages.greeting.random()} ${profile.displayName} ` +
-                  messages.selectFollowing
+            text: `${msgSet.greeting.random()} ${profile.displayName} ` +
+                  msgSet.selectFollowing
           },
-          messages.mainMenu
+          msgSet.mainMenu
         ]);
         return;  // don't add user to active user list
     }
@@ -148,25 +148,25 @@ bot.on('postback', async (event) => {
         user.opt = data.opt === 'true';  
       case 'retry':   // from nfa generated (gotNfa state)
         let reply =
-            `${messages.askForReInput}${(user.opt)? '🚀' : ''}\n` +
-            `${messages.hint}`;
+            `${msgSet.askForReInput}${(user.opt)? msgSet.optSymbol : ''}\n` +
+            `${msgSet.hint}`;
         event.reply(reply);
         break;
       case 'help':
         // Remove the user from active user list and push help message to her.
-        event.reply(messages.helpMenu);
+        event.reply(msgSet.helpMenu);
         break;
       case 'match':
-        event.reply(messages.askForStringToMatch);
+        event.reply(msgSet.askForStringToMatch);
         break;
       case 'restart':
         // Remove the user from active user list and push main menu to him/her.
         event.reply([
           {
             type: 'text',
-            text: messages.selectFollowing
+            text: msgSet.selectFollowing
           },
-          messages.mainMenu
+          msgSet.mainMenu
         ]);
         activeUsers = activeUsers.filter(u => u.id !== user.id);
         return;
@@ -186,26 +186,28 @@ bot.on('message', async (event) => {
     event.reply([
       {
         type: 'text',
-        text: `${messages.greeting.random()} ${profile.displayName} ` +
-              messages.selectFollowing
+        text: `${msgSet.greeting.random()} ${profile.displayName} ` +
+              msgSet.selectFollowing
       },
-      messages.mainMenu
+      msgSet.mainMenu
     ]);
     return;
   }
 
   // Only text message is accepted
   if (event.message.type !== 'text') {
-    let reply = [messages.didNotGetIt.random()];
+    let reply = [msgSet.didNotGetIt.random()];
     switch (user.fsm.state) {
       case 'waitingHelpType':
         reply.push(`Please select a help type!`);
         break;
       case 'waitingReInput':
-        reply.push(`${messages.askForReInputAgain}${(user.opt)? ' 🚀' : ''}`);
+        reply.push(
+            `${msgSet.askForReInputAgain}${(user.opt)? msgSet.optSymbol : ''}`);
         break;
       case 'waitingStringToMatch':
-        reply.push(`${messages.askForStringToMatch}`);
+        reply.push(
+            `${msgSet.askForStringToMatch}`);
         break;
       default:
     }
@@ -222,22 +224,23 @@ bot.on('message', async (event) => {
       event.reply([
         {
           type: 'text',
-          text: `💡 You entered: ${user.input}`
+          text: `${msgSet.confirmPrefix} ${user.input}`
         },
-        messages.confirmReInputTemplate
+        msgSet.confirmReInputTemplate
       ]);
       user.fsm.reInput();
       break;
     case 'hasReInput':
       if (input === 're-enter') {
-        event.reply(`${messages.askForReInput}${(user.opt)? ' 🚀' : ''}`);
+        event.reply(
+            `${msgSet.askForReInput}${(user.opt)? msgSet.optSymbol : ''}`);
         user.fsm.regret();
         return;
       } else if (input !== 'correct') {
         // Don't know what user say, ask from confirmation again.
         event.reply([
-          messages.didNotGetIt.random(),
-          messages.confirmReInputTemplate
+          msgSet.didNotGetIt.random(),
+          msgSet.confirmReInputTemplate
         ]);
         return;
       }
@@ -252,12 +255,12 @@ bot.on('message', async (event) => {
 
         // Wait for uploading the image to imgur.
         let res = await upload2Imgur(OUTPUT_FILE);
-        let menu = messages.onNfaGeneratedMenu;
+        let menu = msgSet.onNfaGeneratedMenu;
         menu.template.thumbnailImageUrl = res.data.link;
         event.reply([
           {
             type: 'text',
-            text: `${messages.onNfaGenerated.random()}`
+            text: `${msgSet.onNfaGenerated.random()}`
           },
           menu
         ]);
@@ -273,7 +276,7 @@ bot.on('message', async (event) => {
         // Something went wrong, ask for RE input again
         event.reply([
           (errorMessage)? errorMessage : e,
-          `${messages.askForReInputAgain}${(user.opt)? ' 🚀' : ''}`
+          `${msgSet.askForReInputAgain}${(user.opt)? msgSet.optSymbol : ''}`
         ]);
         user.fsm.incorrectReInput();
       }
@@ -283,7 +286,7 @@ bot.on('message', async (event) => {
         event.reply([
           {
             type: 'text',
-            text: `${messages.onGetDiagram.random()}`
+            text: `${msgSet.onGetDiagram.random()}`
           },
           {
             type: 'image',
@@ -293,19 +296,19 @@ bot.on('message', async (event) => {
         ]);
         user.fsm.askForDiagram();
       } else {
-        let menu = messages.onNfaGeneratedMenu;
+        let menu = msgSet.onNfaGeneratedMenu;
         menu.template.thumbnailImageUrl = user.nfaUrl;
         event.reply([
-          messages.didNotGetIt.random(),
+          msgSet.didNotGetIt.random(),
           menu
         ]);
       }
       break;
     case 'waitingStringToMatch':
-      let menu = messages.onNfaGeneratedMenu;
+      let menu = msgSet.onNfaGeneratedMenu;
       menu.template.thumbnailImageUrl = user.nfaUrl;
       event.reply([
-        user.nfa.match(input)? messages.onInputMatch : messages.onInputNotMatch,
+        user.nfa.match(input)? msgSet.onInputMatch : msgSet.onInputNotMatch,
         menu
       ]);
       user.fsm.stringToMatch();
@@ -313,35 +316,35 @@ bot.on('message', async (event) => {
     case 'waitingHelpType':
       switch (input) {
         case 'show me RE':
-          event.reply(messages.reExplained);
+          event.reply(msgSet.reExplained);
           user.fsm.askForReHelp();
           break;
         case 'get me control FSM diagram':
           event.reply([
-            messages.onGetDiagram.random(),
+            msgSet.onGetDiagram.random(),
             {
               type: 'image',
-              originalContentUrl: messages.controlFsmDiagram,
-              previewImageUrl: messages.controlFsmDiagram
+              originalContentUrl: msgSet.controlFsmDiagram,
+              previewImageUrl: msgSet.controlFsmDiagram
             }
           ]);
           user.fsm.askForFsm();
           break;
         case 'get me RE parser CFSM diagram':
           event.reply([
-            messages.onGetDiagram.random(),
+            msgSet.onGetDiagram.random(),
             {
               type: 'image',
-              originalContentUrl: messages.reParserCfsmDiagram,
-              previewImageUrl: messages.reParserCfsmDiagram
+              originalContentUrl: msgSet.reParserCfsmDiagram,
+              previewImageUrl: msgSet.reParserCfsmDiagram
             }
           ]);
           user.fsm.askForParserCfsm();
           break;
         default:
           event.reply([
-            messages.didNotGetIt.random(),
-            messages.helpMenu
+            msgSet.didNotGetIt.random(),
+            msgSet.helpMenu
           ]);
           break;
       }
@@ -349,8 +352,8 @@ bot.on('message', async (event) => {
     default:
       // This may not happen.
       event.reply([
-        messages.didNotGetIt.random(),
-        messages.mainMenu
+        msgSet.didNotGetIt.random(),
+        msgSet.mainMenu
       ]);
       break;
   }
@@ -370,7 +373,7 @@ app.get('/active_users', (_req, res) => {
 });
 
 app.get('/ctrl_fsm', async (_req, res) => {
-  res.send(`<script>location.replace(${messages.controlFsmDiagram})</script>`);
+  res.send(`<script>location.replace(${msgSet.controlFsmDiagram})</script>`);
 });
 
 app.listen(PORT);
