@@ -28,43 +28,70 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 <img src="./img/re2nfa-demo.gif" style="width: 30%; align: left"/>
 
-* An intuitive and straightforward way of constructing an NFA from RE
-* Easy to understand the structure of the NFA
-* Has only one single final state
+* An intuitive and straightforward way of constructing an NFA from RE.
+* Easy to understand the structure of the NFA.
+* Has only one single final state.
 
 ### RE to NFA (optimized)
 
 <img src="./img/re2nfa-opt-demo.gif" style="width: 30%; align: left"/>
 
-* Optimize the NFA generation of all kinds of regular expression operator
-* Minimized number of states and transitions
-* Has multiple final states
+* Optimize the NFA generation of all kinds of regular expression operator.
+* Minimized number of states and transitions.
+* Has multiple final states.
 
 
 ### Match
 
 <img src="./img/nfa-match-demo.gif" style="width: 30%; align: left"/>
 
-* You can use **Match** to test the NFA you crafted
-* It tells you whether the input string you entered can be accept by the NFA or not
+* You can use **Match** to test the NFA you crafted.
+* It tells you whether the input string you entered can be accept by the NFA or not.
 
 ### Help
 
 <img src="./img/help-demo.gif" style="width: 30%; align: left"/>
 
-* A simple help page is provided to give you more information about NFA and RE
-* It shows the relation of an RE expression between the corresponding NFA component
-* You can also get the detailed control flow state machine diagram and the characteristic finite state machine diagram of RE parser in the help page
+* A simple help page is provided to give you more information about NFA and RE.
+* It shows the relation of an RE expression between the corresponding NFA component.
+* You can also get the detailed control flow state machine diagram and the characteristic finite state machine diagram of RE parser in the help page.
 
 ## Features
 
-* Hand crafted regular expression compiler
-* Stack based NFA generator
-* NFA optimization for minimal states and transitions
-* Same regular expression grammar as you had learned in the ToC course
-* Able to simulate NFA transitions and match an input string
-* No database required for multiuser
-* Minimal source codes
+### For users
+
+* **Easy to use**
+  * ToC-RE-Helper provides clean, beautiful and friendly UI.
+  * All the functionalities are super easy to use.
+
+* **Same regular expression grammar as you had learned in the ToC course**
+  * The regular expression is the same as what you had learned in the class.
+  * It help you to get started with ToC-RE-Helper much faster.
+
+* **Able to simulate NFA transitions and match an input string**
+  * Besides constructing an NFA, you can also give it an input string and see if it can be accepted by your NFA.
+
+
+### For developers
+
+* **Hand crafted regular expression compiler**
+  * The compiler is written base on the knowledge learned from the course [**Compiler Construction**](http://class-qry.acad.ncku.edu.tw/syllabus/online_display.php?syear=0110&sem=2&co_no=F732400&class_code=).
+  * The frontend RE parser and backend NFA generator are separated as the modern compiler design methodology does.
+  * Use bottom-up parsing to check the syntax of regular expression.
+  * An [intermediate representation](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/f60f81d6bc47232a30aad24c8f09a9e812bf3e95/lib/re-compiler.js#L771) is generated to describe how the NFA is to be build.
+
+* **Stack based NFA generator**
+  * The generator takes the IR as input and generate a corresponding NFA based on the description.
+  * The generator can be considered as a stack virtual machine and the IR is the instruction sequence.
+  * The operation on the RE can be mapped to the construction on the NFA directly.
+
+* **NFA optimization for minimal states and transitions**
+  * In addition to an intuitive way of constructing an NFA, the generator can also do optimizations.
+  * It generates two times less states and transitions than the intuitive way on average .
+
+* **Minimal source codes**
+  * There are only 2 source files in this repo, one for the server and the other for the RE compiler.
+
 
 ## FSM
 
