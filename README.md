@@ -99,11 +99,11 @@ The state machine is the core of [regular expression compiler](https://github.co
 
 ### Framework
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Node.js_logo.svg/1200px-Node.js_logo.svg.png" style="width:20%; align:left;" />
+<img src="https://res.cloudinary.com/practicaldev/image/fetch/s--_QMQU86---/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/i/6dnng3pre04xxdebia1g.png" style="width:50%; align:left;" />
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png" style="width:20%; align:left;" />
 
-The framework of this bot is based on [Node.js](https://nodejs.org/en/) and [npm](https://www.npmjs.com/) is used as the package manager.
+The framework of this bot is based on [Node.js](https://nodejs.org/en/) and [Express](https://expressjs.com/zh-tw/). Besides, [npm](https://www.npmjs.com/) is used as the package manager.
 
 ### Dependencies
 
@@ -113,4 +113,16 @@ The dependent packages are recorded in `packages.json`. To install them, do
 $ npm install
 ```
 
+### Prerequisite
 
+Create a line channel and get the `channel_id`, `channel_secret` and `channel_access_token`. Also, get an [imgur](https://imgur.com/) account and register an **application**, which is used to upload the generated diagram and obtain the link to the it to send an image message in LINE. You will also get an `client_id` for your imgur application. Finally, create your own `.env` file according to the format described in `.env.sample` then you're ready to go.
+
+### Activate the server
+
+To activate the server, simply do
+
+```bash
+$ node app.js
+```
+
+The server listen on the port `6459/` by default. You can specify the port by your own [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/b1d8363f8c4b4e8197153cf174adf1f28f4abdbf/app.js#L13). Also, remember to set the webhook url for your LINE messaging api.
