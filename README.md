@@ -78,7 +78,7 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 * **Hand crafted regular expression compiler**
   * The compiler is written base on the knowledge learned from the course [**Compiler Construction**](http://class-qry.acad.ncku.edu.tw/syllabus/online_display.php?syear=0110&sem=2&co_no=F732400&class_code=).
   * The frontend RE parser and backend NFA generator are separated as the modern compiler design methodology does.
-  * Use bottom-up parsing to check the syntax of regular expression.
+  * Use bottom-up parsing to check the syntax of regular expressions.
   * An [intermediate representation](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/f60f81d6bc47232a30aad24c8f09a9e812bf3e95/lib/re-compiler.js#L771) is generated to describe how the NFA is to be build.
 
 * **Stack based NFA generator**
@@ -88,7 +88,7 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 * **NFA optimization for minimal states and transitions**
   * In addition to an intuitive way of constructing an NFA, the generator can also do optimizations.
-  * It generates two times less states and transitions than the intuitive way on average .
+  * It generates two times less states and transitions than the intuitive way on average.
 
 * **Minimal source codes**
   * There are only 2 source files in this repo, one for the server and the other for the RE compiler.
