@@ -288,7 +288,7 @@
               },
               {
                 "type": "text",
-                "text": " L(M) = L(a) U L(b) = {a} U {b}",
+                "text": " L(M) = L(a+b) = {a} U {b}",
                 "size": "md",
                 "style": "italic",
                 "weight": "bold",
@@ -488,9 +488,9 @@
       "title": "Next step",
       "text": "NFA generated! Please select the next step.",
       "defaultAction": {
-        "type": "postback",
-        "label": "Match 👀",
-        "data": "action=match"
+        "type": "message",
+        "label": "Get NFA diagram 🗒",
+        "text": "get me the diagram"
       },
       "actions": [
         {
@@ -510,7 +510,7 @@
         },
         {
           "type": "postback",
-          "label": "Restart ⏮ ",
+          "label": "Back to main menu ⏮ ",
           "data": "action=restart"
         }
       ]

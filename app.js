@@ -268,8 +268,6 @@ bot.on('message', async (event) => {
         // The user can proceed to the next state.
         user.fsm.correctReInput();
       } catch (e) {
-        console.log(e);
-        // @todo rander error message
         let errorMessage = reCompiler.getErrorMessage(e);
 
         // Something went wrong, ask for RE input again
