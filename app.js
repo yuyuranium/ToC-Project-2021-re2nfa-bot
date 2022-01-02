@@ -321,8 +321,8 @@ bot.on('message', async (event) => {
             messages.onGetDiagram.random(),
             {
               type: 'image',
-              originalContentUrl: 'https://i.imgur.com/9gEEbNw.jpg',
-              previewImageUrl: 'https://i.imgur.com/9gEEbNw.jpg'
+              originalContentUrl: messages.controlFsmDiagram,
+              previewImageUrl: messages.controlFsmDiagram
             }
           ]);
           user.fsm.askForFsm();
@@ -332,8 +332,8 @@ bot.on('message', async (event) => {
             messages.onGetDiagram.random(),
             {
               type: 'image',
-              originalContentUrl: 'https://i.imgur.com/9gEEbNw.jpg',
-              previewImageUrl: 'https://i.imgur.com/9gEEbNw.jpg'
+              originalContentUrl: messages.reParserCfsmDiagram,
+              previewImageUrl: messages.reParserCfsmDiagram
             }
           ]);
           user.fsm.askForParserCfsm();
@@ -370,9 +370,7 @@ app.get('/active_users', (_req, res) => {
 });
 
 app.get('/ctrl_fsm', async (_req, res) => {
-  await render(visualize(new ControlFsm()));
-  let result = await upload2Imgur(OUTPUT_FILE);
-  res.send(`<script>location.replace('${result.data.link}')</script>`);
+  res.send(`<script>location.replace(${messages.controlFsmDiagram})</script>`);
 });
 
 app.listen(PORT);
