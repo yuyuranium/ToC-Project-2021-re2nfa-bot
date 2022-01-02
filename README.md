@@ -99,9 +99,13 @@ The state machine is the core of [regular expression compiler](https://github.co
 
 ### Framework
 
-<img src="https://res.cloudinary.com/practicaldev/image/fetch/s--_QMQU86---/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/i/6dnng3pre04xxdebia1g.png" style="width:50%; align:left;" />
+<p align="center">
+  <img src="https://res.cloudinary.com/practicaldev/image/fetch/s--_QMQU86---/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/i/6dnng3pre04xxdebia1g.png" style="width:50%;" />
+</p>
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png" style="width:20%; align:left;" />
+<p align="center">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1200px-Npm-logo.svg.png" style="width:20%;" />
+</p>
 
 The framework of this bot is based on [Node.js](https://nodejs.org/en/) and [Express](https://expressjs.com/zh-tw/). Besides, [npm](https://www.npmjs.com/) is used as the package manager.
 
