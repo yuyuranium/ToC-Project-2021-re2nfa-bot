@@ -147,7 +147,7 @@ $ npm install
 
 ### Prerequisite
 
-Create a line channel and get the `channel_id`, `channel_secret` and `channel_access_token`. Also, get an [imgur](https://imgur.com/) account and register an **application**, which is used to upload the generated diagram and obtain the link to the it to send an image message in LINE. You will also get an `client_id` for your imgur application. Finally, create your own `.env` file according to the format described in `.env.sample` then you're ready to go.
+Create a LINE channel and get the `channel_id`, `channel_secret` and `channel_access_token`. Also, get an [imgur](https://imgur.com/) account and register an **application**, which is used to upload the generated diagrams and obtain the link to the them to send image messages in LINE. You will also get an `client_id` for your imgur application. Finally, create your own `.env` file according to the format described in `.env.sample` then you're ready to go.
 
 ### Activate the server
 
