@@ -24,26 +24,26 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 ## Demo
 
-| ![](./img/re2nfa-demo.gif) | ![](./img/re2nfa-opt-demo.gif) | ![](./img/nfa-match-demo.gif) | ![](./img/help-demo.gif) |
-| -------------------------- | ------------------------------ | ----------------------------- | ------------------------ |
-| RE to NFA                  | RE to NFA (optimized)          | Match                         | Help                     |
-
 ### RE to NFA
 
-<img src="./img/re2nfa-demo.gif" width="25%;" align="left"/>
+<img src="./img/re2nfa-demo.gif" style="width: 30%; align: left"/>
 
+* An intuitive and straightforward way of constructing an NFA from RE
+* Easy to understand the structure of the NFA
+* Has only one single final state
 
 ### RE to NFA (optimized)
 
-<img src="./img/re2nfa-opt-demo.gif" width="25%;" align="left"/>
+<img src="./img/re2nfa-opt-demo.gif" style="width: 30%; align: left"/>
+
 
 ### Match
 
-<img src="./img/nfa-match-demo.gif" width="25%;" align="left"/>
+<img src="./img/nfa-match-demo.gif" style="width: 30%; align: left"/>
 
 ### Help
 
-<img src="./img/help-demo.gif" width="25%;" align="left"/>
+<img src="./img/help-demo.gif" style="width: 30%; align: left"/>
 
 ## Features
 
