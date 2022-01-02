@@ -42,6 +42,9 @@ const ControlFsm = StateMachine.factory({
   transitions: [
     { name: 're2nfa', from: '*', to: 'waitingReInput' },
     { name: 'help', from: '*', to: 'waitingHelpType' },
+    { name: 'askForReHelp', from: 'waitingHelpType', to: 'waitingHelpType' },
+    { name: 'askForFsm', from: 'waitingHelpType', to: 'waitingHelpType' },
+    { name: 'askForParserCfsm', from: 'waitingHelpType', to: 'waitingHelpType' },
     { name: 'reInput', from: 'waitingReInput', to: 'hasReInput' },
     { name: 'regret', from: 'hasReInput', to: 'waitingReInput' },
     { name: 'correctReInput', from: 'hasReInput', to: 'gotNfa' },
@@ -116,7 +119,7 @@ bot.on('postback', async (event) => {
         event.reply(reply);
         break;
       case 'help':
-        event.reply(messages.reExplained);
+        event.reply(messages.helpMenu);
         break;
       default:
         // May be 'match', 'retry' or 'restart' but user is not active.
@@ -129,7 +132,7 @@ bot.on('postback', async (event) => {
           },
           messages.mainMenu
         ]);
-        return;
+        return;  // don't add user to active user list
     }
 
     user.fsm[data.action]();  // do the transition
@@ -150,7 +153,8 @@ bot.on('postback', async (event) => {
         event.reply(reply);
         break;
       case 'help':
-        event.reply(messages.reExplained);
+        // Remove the user from active user list and push help message to her.
+        event.reply(messages.helpMenu);
         break;
       case 'match':
         event.reply(messages.askForStringToMatch);
@@ -225,11 +229,11 @@ bot.on('message', async (event) => {
       user.fsm.reInput();
       break;
     case 'hasReInput':
-      if (input === 'no') {
+      if (input === 're-enter') {
         event.reply(`${messages.askForReInput}${(user.opt)? ' 🚀' : ''}`);
         user.fsm.regret();
         return;
-      } else if (input !== 'yes') {
+      } else if (input !== 'correct') {
         // Don't know what user say, ask from confirmation again.
         event.reply([
           messages.didNotGetIt.random(),
@@ -281,7 +285,7 @@ bot.on('message', async (event) => {
         event.reply([
           {
             type: 'text',
-            text: `${messages.onGetNfaDiagram.random()}`
+            text: `${messages.onGetDiagram.random()}`
           },
           {
             type: 'image',
@@ -308,7 +312,48 @@ bot.on('message', async (event) => {
       ]);
       user.fsm.stringToMatch();
       break;
+    case 'waitingHelpType':
+      switch (input) {
+        case 'show me RE':
+          event.reply(messages.reExplained);
+          user.fsm.askForReHelp();
+          break;
+        case 'get me control FSM diagram':
+          event.reply([
+            messages.onGetDiagram.random(),
+            {
+              type: 'image',
+              originalContentUrl: 'https://i.imgur.com/9gEEbNw.jpg',
+              previewImageUrl: 'https://i.imgur.com/9gEEbNw.jpg'
+            }
+          ]);
+          user.fsm.askForFsm();
+          break;
+        case 'get me RE parser CFSM diagram':
+          event.reply([
+            messages.onGetDiagram.random(),
+            {
+              type: 'image',
+              originalContentUrl: 'https://i.imgur.com/9gEEbNw.jpg',
+              previewImageUrl: 'https://i.imgur.com/9gEEbNw.jpg'
+            }
+          ]);
+          user.fsm.askForParserCfsm();
+          break;
+        default:
+          event.reply([
+            messages.didNotGetIt.random(),
+            messages.helpMenu
+          ]);
+          break;
+      }
+      break;
     default:
+      // This may not happen.
+      event.reply([
+        messages.didNotGetIt.random(),
+        messages.mainMenu
+      ]);
       break;
   }
 });

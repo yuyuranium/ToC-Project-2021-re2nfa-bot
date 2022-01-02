@@ -40,31 +40,150 @@
           "text": "Don't know what to do?",
           "actions": [{
             "type": "postback",
-            "label": "What is an RE? 🤯",
+            "label": "See help 💡",
             "data": "action=help"
           }]
         }
       ]
     }
   },
-  "confirmReInputTemplate": {
-    "type": "template",
-    "altText": "Please confirm your input",
-    "template": {
-        "type": "confirm",
-        "text": "Is this correct? 😀",
-        "actions": [
-            {
+  "helpMenu": {
+    "type": "flex",
+    "altText": "Please select the help message",
+    "contents": {
+      "type": "bubble",
+      "size": "kilo",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "image",
+            "url": "https://i.imgur.com/9gEEbNw.jpg",
+            "aspectRatio": "16:10",
+            "aspectMode": "fit",
+            "size": "full",
+            "margin": "none",
+            "offsetTop": "none",
+            "offsetBottom": "none",
+            "offsetStart": "none"
+          },
+          {
+            "type": "text",
+            "text": "Help",
+            "weight": "bold",
+            "color": "#000000",
+            "style": "normal"
+          },
+          {
+            "type": "text",
+            "text": "Click the button to see help contents",
+            "weight": "regular",
+            "size": "sm",
+            "decoration": "none",
+            "align": "start",
+            "wrap": true
+          }
+        ],
+        "spacing": "md",
+        "justifyContent": "space-around"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
               "type": "message",
-              "label": "✅",
-              "text": "yes"
+              "label": "What is an RE? 🤯",
+              "text": "show me RE"
             },
-            {
+            "style": "link",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
               "type": "message",
-              "label": "❌",
-              "text": "no"
-            }
-        ]
+              "label": "Control FSM ⚙",
+              "text": "get me control FSM diagram"
+            },
+            "style": "link",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "message",
+              "label": "RE parser CFSM 🛠",
+              "text": "get me RE parser CFSM diagram"
+            },
+            "style": "link",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "uri",
+              "label": "Source code 📝",
+              "uri": "https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot"
+            },
+            "style": "link",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "Back to main menu ⏮",
+              "data": "action=restart"
+            },
+            "style": "link",
+            "height": "sm"
+          }
+        ],
+        "spacing": "xs"
+      },
+      "styles": {
+        "body": {
+          "separator": true
+        }
+      }
+    }
+  },
+  "confirmReInputTemplate": {
+    "type": "flex",
+    "altText": "Please confirm your input",
+    "contents": {
+      "type": "bubble",
+      "size": "kilo",
+      "body": {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "message",
+              "label": "Correct",
+              "text": "correct"
+            },
+            "style": "primary"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "message",
+              "label": "Re-enter",
+              "text": "re-enter"
+            },
+            "style": "secondary"
+          }
+        ],
+        "spacing": "md",
+        "margin": "none"
+      }
     }
   },
   "reExplained": {
@@ -100,7 +219,7 @@
             "contents": [
               {
                 "type": "text",
-                "text": "Primitive is an atomic component of regular expressions.The above NFA shows",
+                "text": "Primitive is an atomic component of regular expressions. The above NFA shows",
                 "weight": "regular",
                 "style": "normal",
                 "gravity": "top",
@@ -120,7 +239,13 @@
                 "decoration": "none",
                 "margin": "md"
               }
-            ]
+            ],
+            "justifyContent": "space-around"
+          },
+          "styles": {
+            "body": {
+              "separator": true
+            }
           }
         },
         {
@@ -171,7 +296,13 @@
                 "decoration": "none",
                 "margin": "md"
               }
-            ]
+            ],
+            "justifyContent": "space-around"
+          },
+          "styles": {
+            "body": {
+              "separator": true
+            }
           }
         },
         {
@@ -222,7 +353,13 @@
                 "decoration": "none",
                 "margin": "md"
               }
-            ]
+            ],
+            "justifyContent": "space-around"
+          },
+          "styles": {
+            "body": {
+              "separator": true
+            }
           }
         },
         {
@@ -273,7 +410,13 @@
                 "decoration": "none",
                 "margin": "md"
               }
-            ]
+            ],
+            "justifyContent": "space-around"
+          },
+          "styles": {
+            "body": {
+              "separator": true
+            }
           }
         },
         {
@@ -306,8 +449,8 @@
                 "type": "button",
                 "action": {
                   "type": "postback",
-                  "label": "Back to main menu",
-                  "data": "action=restart"
+                  "label": "Back to help menu",
+                  "data": "action=help"
                 },
                 "style": "primary"
               },
@@ -315,7 +458,7 @@
                 "type": "button",
                 "action": {
                   "type": "uri",
-                  "label": "See more",
+                  "label": "Learn more",
                   "uri": "https://www.cs.rochester.edu/u/nelson/courses/csc_173/fa/re.html"
                 },
                 "style": "secondary"
@@ -323,6 +466,11 @@
             ],
             "position": "relative",
             "spacing": "md"
+          },
+          "styles": {
+            "body": {
+              "separator": false
+            }
           }
         }
       ]
@@ -384,7 +532,7 @@
     "That's cool! 😆",
     "Got it! 😙"
   ],
-  "onGetNfaDiagram": [
+  "onGetDiagram": [
     "Sure! 😆",
     "Here you are! 🤗",
     "There you go! 😛",
