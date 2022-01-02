@@ -1,10 +1,8 @@
 # ToC-RE-Helper
 
-<div>
-
-<img src="./img/re2nfa-icon.jpg" style="zoom:20%;" align="center"/>
-
-</div>
+<p align="center">
+  <img src="./img/re2nfa-icon.jpg" width="25%;" align="center"/>
+</p>
 
 ## Intro
 
@@ -18,7 +16,7 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 ### QR code
 
-<img src="./img/846cqgxg.png" style="zoom:75%;" align="left"/>
+<p style="text-align: center"><img src="./img/846cqgxg.png" width="25%"></p>
 
 * Scan the QR code and add the bot **ToC-RE-Helper** official account as your friends.
 * Select **RE to NFA** on the main menu to start crafting your **NFA**!
@@ -28,19 +26,20 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 ### RE to NFA
 
-<img src="./img/re2nfa-demo.gif" style="zoom:50%;" align="left"/>
+<img src="./img/re2nfa-demo.gif" style="width: 20%; align: left;"/>
+
 
 ### RE to NFA (optimized)
 
-<img src="./img/re2nfa-opt-demo.gif" style="zoom:50%;" align="left"/>
+<img src="./img/re2nfa-opt-demo.gif" width="25%;" align="left"/>
 
 ### Match
 
-<img src="./img/nfa-match-demo.gif" style="zoom:50%;" align="left"/>
+<img src="./img/nfa-match-demo.gif" width="25%;" align="left"/>
 
 ### Help
 
-<img src="./img/help-demo.gif" style="zoom:50%;" align="left"/>
+<img src="./img/help-demo.gif" width="25%;" align="left"/>
 
 ## Features
 
