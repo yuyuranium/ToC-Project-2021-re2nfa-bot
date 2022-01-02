@@ -74,7 +74,7 @@ There are two **finite state machine**s in my program, one for recording current
 
 ![](./img/control-fsm.png)
 
-This is the FSM for a active user. There are mainly 6 states for an active user, which are
+This is the FSM to record the status of a active user. There are mainly 6 states for an active user, which are
 
 * `initial`
 * `waitingReInput`
@@ -87,8 +87,10 @@ In any state, user can go to any of `initial`, `waitingReInput` or `waitingHelpT
 
 The transition like `reInput` or `stringToMatch` correspond to the text input of user. `correctReInput` and `incorrectReInput` is triggered by the compilation result of user's RE input. As for all the help options, those transitions all go back to the `waitingHelpType` since the user can consecutively ask for different help contents.
 
+Once the user clicks the button that triggers `re2nfa` or `help` transition, then the user information is record in an **active user list**. On the contrary, if the user triggers `restart` transition, then he or she would be moved out from the list.
+
 ### CFSM of RE parser
 
 ![](./img/re-parser-cfsm.png)
 
-The state machine is the core of regular expression parser [(see source code)](./lib/re-parser.js). The parser is a implementation of **button-up** parser, which is capable of parse the input using a SLR(1) grammar.
+The state machine is the core of [regular expression compiler](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/re-compiler.js). The parser is a implementation of **button-up** parser, which is capable of parse the input using a SLR(1) grammar. The [parser driver](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/0d7d45ae109dc13acd538a439ca38cbbe9c99a46/lib/re-compiler.js#L181) is driven by the parse table derived by the CFSM and performs **shift-reduce** parsing on the input token string. For more detailed information, please refer to [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/README.md).
