@@ -18,7 +18,8 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 <p style="text-align: center"><img src="./img/846cqgxg.png" width="25%"></p>
 
-* Scan the QR code and add the bot **ToC-RE-Helper** official account as your friends.
+### Try it out!
+* Scan the QR code and add **ToC-RE-Helper** official account as your friend.
 * Select **RE to NFA** on the main menu to start crafting your **NFA**!
 * If having trouble, you can see the **Help** content by clicking the help option on the main menu.
 
