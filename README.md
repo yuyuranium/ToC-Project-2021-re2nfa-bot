@@ -74,20 +74,21 @@ There are two **finite state machine**s in my program, one for recording current
 
 ![](./img/control-fsm.png)
 
-* The FSM for the user.
-* There are mainly 6 states for an active user.
-  * `initial`
-  * `waitingReInput`
-  * `hasReInput`
-  * `gotNfa`
-  * `waitingStringToMatch`
-  * `waitingHelpType`
-* In any state, user can go to any of `initial`, `waitingReInput` or `waitingHelpType` without restraint via `restart`, `re2nfa` or `help` transition respectively.
-* It maps to the clicking on the button of the **template messages** sent by the bot.
+This is the FSM for a active user. There are mainly 6 states for an active user, which are
+
+* `initial`
+* `waitingReInput`
+* `hasReInput`
+* `gotNfa`
+* `waitingStringToMatch`
+* `waitingHelpType`
+
+In any state, user can go to any of `initial`, `waitingReInput` or `waitingHelpType` without restraint via `restart`, `re2nfa` or `help` transition respectively, which maps to the clicking on the button of the **template messages** sent by the bot.
+
+The transition like `reInput` or `stringToMatch` correspond to the text input of user. `correctReInput` and `incorrectReInput` is triggered by the compilation result of user's RE input. As for all the help options, those transitions all go back to the `waitingHelpType` since the user can consecutively ask for different help contents.
 
 ### CFSM of RE parser
 
 ![](./img/re-parser-cfsm.png)
 
-
-
+The state machine is the core of regular expression parser [(see source code)](./lib/re-parser.js). The parser is a implementation of **button-up** parser, which is capable of parse the input using a SLR(1) grammar.
