@@ -158,3 +158,5 @@ $ node app.js
 ```
 
 The server listen on the port `6459/` by default. You can specify the port by your own [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/b1d8363f8c4b4e8197153cf174adf1f28f4abdbf/app.js#L13). Also, remember to set the webhook url for your LINE messaging api.
+
+> Author: E24076459 Yu-Yu Hsiao
