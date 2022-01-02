@@ -24,9 +24,13 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 ## Demo
 
+| ![](./img/re2nfa-demo.gif) | ![](./img/re2nfa-opt-demo.gif) | ![](./img/nfa-match-demo.gif) | ![](./img/help-demo.gif) |
+| -------------------------- | ------------------------------ | ----------------------------- | ------------------------ |
+| RE to NFA                  | RE to NFA (optimized)          | Match                         | Help                     |
+
 ### RE to NFA
 
-<img src="./img/re2nfa-demo.gif" style="width: 20%; align: left;"/>
+<img src="./img/re2nfa-demo.gif" width="25%;" align="left"/>
 
 
 ### RE to NFA (optimized)
