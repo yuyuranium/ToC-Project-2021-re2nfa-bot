@@ -199,7 +199,7 @@ bot.on('message', async (event) => {
     let reply = [msgSet.didNotGetIt.random()];
     switch (user.fsm.state) {
       case 'waitingHelpType':
-        reply.push(`Please select a help type!`);
+        reply.push(msgSet.helpMenu);
         break;
       case 'waitingReInput':
         reply.push(
