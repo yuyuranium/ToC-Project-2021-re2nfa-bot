@@ -145,6 +145,12 @@ The dependent packages are recorded in `packages.json`. To install them, do
 $ npm install
 ```
 
+Plus, [Graphviz](https://graphviz.org/) is used to plot the diagram of NFA's. Make sure you have that also. To check, do
+
+```bash
+$ which dot  # /usr/bin/dot
+```
+
 ### Prerequisite
 
 Create a LINE channel and get the `channel_id`, `channel_secret` and `channel_access_token`. Also, get an [imgur](https://imgur.com/) account and register an **application**, which is used to upload the generated diagrams and obtain the link to the them to send image messages in LINE. You will also get a `client_id` for your imgur application. Finally, create your own `.env` file according to the format described in `.env.sample` then you're ready to go.
