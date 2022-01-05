@@ -63,11 +63,11 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
 
 * **Easy to use**
   * ToC-RE-Helper provides clean, beautiful and friendly UI.
-  * All the functionalities are super easy to use.
+  * All the functionalities are super easy to understand.
 
 * **Same regular expression grammar as you had learned in the ToC course**
   * The regular expression is the same as what you had learned in the class.
-  * It help you to get started with ToC-RE-Helper much faster.
+  * It helps you to get started with ToC-RE-Helper much faster.
 
 * **Able to simulate NFA transitions and match an input string**
   * Besides constructing an NFA, you can also give it an input string and see if it can be accepted by your NFA.
@@ -79,16 +79,16 @@ The LINE bot **ToC-RE-Helper** would help you transform an **RE** you learned in
   * The compiler is written base on the knowledge learned from the course [**Compiler Construction**](http://class-qry.acad.ncku.edu.tw/syllabus/online_display.php?syear=0110&sem=2&co_no=F732400&class_code=).
   * The frontend RE parser and backend NFA generator are separated as the modern compiler design methodology does.
   * Use bottom-up parsing to check the syntax of regular expressions.
-  * An [intermediate representation](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/f60f81d6bc47232a30aad24c8f09a9e812bf3e95/lib/re-compiler.js#L771) is generated to describe how the NFA is to be build.
+  * An [intermediate representation](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/f60f81d6bc47232a30aad24c8f09a9e812bf3e95/lib/re-compiler.js#L771) is generated to describe how the NFA is to be built.
 
 * **Stack based NFA generator**
-  * The generator takes the IR as input and generate a corresponding NFA based on the description.
+  * The generator takes the IR as input and generates a corresponding NFA based on the description.
   * The generator can be considered as a stack virtual machine and the IR is the instruction sequence.
   * The operation on the RE can be mapped to the construction on the NFA directly.
 
 * **NFA optimization for minimal states and transitions**
   * In addition to an intuitive way of constructing an NFA, the generator can also do optimizations.
-  * It generates two times less states and transitions than the intuitive way on average.
+  * It on average generates two times less states and transitions than the intuitive way does.
 
 * **Minimal source codes**
   * There are only 2 source files in this repo, one for the server and the other for the RE compiler.
@@ -102,7 +102,7 @@ There are two **finite state machine**s in my program, one for recording current
 
 ![](./img/control-fsm.png)
 
-This is the FSM to record the status of a active user. There are mainly 6 states for an active user, which are
+This is the FSM recording the status of a active user. There are mainly 6 states for an active user, which are
 
 * `initial`
 * `waitingReInput`
@@ -121,7 +121,7 @@ Once the user clicks the button that triggers `re2nfa` or `help` transition, the
 
 ![](./img/re-parser-cfsm.png)
 
-The state machine is the core of [regular expression compiler](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/re-compiler.js). The parser is a implementation of **button-up** parser, which is capable of parse the input using a SLR(1) grammar. The [parser driver](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/0d7d45ae109dc13acd538a439ca38cbbe9c99a46/lib/re-compiler.js#L181) is driven by the parse table derived by the CFSM and performs **shift-reduce** parsing on the input token string. For more detailed information, please refer to [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/README.md).
+The state machine is the core of [regular expression compiler](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/re-compiler.js). The parser is a implementation of **button-up** parser, which is capable of parsing the input using a SLR(1) grammar. The [parser driver](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/0d7d45ae109dc13acd538a439ca38cbbe9c99a46/lib/re-compiler.js#L181) is driven by the parse table derived by the CFSM and performs **shift-reduce** parsing on the input token stream. For more detailed information, please refer to [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/main/lib/README.md).
 
 ## Deployment
 
@@ -147,7 +147,7 @@ $ npm install
 
 ### Prerequisite
 
-Create a LINE channel and get the `channel_id`, `channel_secret` and `channel_access_token`. Also, get an [imgur](https://imgur.com/) account and register an **application**, which is used to upload the generated diagrams and obtain the link to the them to send image messages in LINE. You will also get an `client_id` for your imgur application. Finally, create your own `.env` file according to the format described in `.env.sample` then you're ready to go.
+Create a LINE channel and get the `channel_id`, `channel_secret` and `channel_access_token`. Also, get an [imgur](https://imgur.com/) account and register an **application**, which is used to upload the generated diagrams and obtain the link to the them to send image messages in LINE. You will also get a `client_id` for your imgur application. Finally, create your own `.env` file according to the format described in `.env.sample` then you're ready to go.
 
 ### Activate the server
 
@@ -157,6 +157,6 @@ To activate the server, simply do
 $ node app.js
 ```
 
-The server listen on the port `6459/` by default. You can specify the port by your own [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/b1d8363f8c4b4e8197153cf174adf1f28f4abdbf/app.js#L13). Also, remember to set the webhook url for your LINE messaging api.
+The server listens on the port `6459/` by default. You can specify the port by your own [here](https://github.com/yuyuranium/ToC-Project-2021-re2nfa-bot/blob/b1d8363f8c4b4e8197153cf174adf1f28f4abdbf/app.js#L13). Also, remember to set the webhook url for your LINE messaging api.
 
 > Author: E24076459 Yu-Yu Hsiao
